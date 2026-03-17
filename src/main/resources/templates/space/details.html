@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head}"></head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+<div class="container">
+    <h1 th:text="${space.name}">Space</h1>
+    <ul class="list-group mb-3">
+        <li class="list-group-item"><strong th:text="#{spaces.table.type}">Type</strong>: <span th:text="${space.type}"></span></li>
+        <li class="list-group-item"><strong th:text="#{spaces.table.location}">Location</strong>: <span th:text="${space.location}"></span></li>
+        <li class="list-group-item"><strong th:text="#{spaces.table.capacity}">Capacity</strong>: <span th:text="${space.capacity}"></span></li>
+    </ul>
+    <p>
+        <a class="btn btn-outline-primary" th:href="@{/space/{id}/availability(id=${space.id})}" th:text="#{spaces.availability}">Check availability</a>
+    </p>
+    <p>
+        <a class="btn btn-link" th:href="@{/space}" th:text="#{spaces.back.list}">Back to list</a>
+    </p>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

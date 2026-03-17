@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://thymeleaf.org">
+<head th:replace="fragments/head"/>
+<body>
+
+<!-- Barra de Navegación superior -->
+<nav th:replace="fragments/nav"/>
+
+<div class="container">
+    <h2>Editar espacio</h2>
+
+    <!-- Mensaje de error por nombre duplicado u otras validaciones -->
+    <div th:if="${errorMessage}" class="alert alert-danger" role="alert"
+         th:text="${errorMessage}">
+        Error al actualizar el espacio.
+    </div>
+
+    <form class="form-horizontal" method="post" th:action="@{'/space/edit/' + ${space.id}}">
+
+        <!-- TYPE -->
+        <div class="form-group">
+            <label class="control-label col-sm-2" for="type">Tipo:</label>
+            <div class="col-sm-10">
+                <select id="type" class="form-control" name="type">
+                    <option th:each="t : ${spaceTypes}"
+                            th:value="${t}"
+                            th:text="${t}"
+                            th:selected="${t == space.type}">
+                    </option>
+                </select>
+            </div>
+        </div>
+
+        <!-- NAME -->
+        <div class="form-group">
+            <label class="control-label col-sm-2" for="name">Nombre:</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" id="name" name="name"
+                       th:value="${space.name}"
+                       placeholder="Nombre del espacio"
+                       required="true"/>
+            </div>
+        </div>
+
+        <!-- LOCATION -->
+        <div class="form-group">
+            <label class="control-label col-sm-2" for="location">Ubicación:</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" id="location" name="location"
+                       th:value="${space.location}"
+                       placeholder="Ubicación del espacio" required="true"/>
+            </div>
+        </div>
+
+        <!-- CAPACITY -->
+        <div class="form-group">
+            <label class="control-label col-sm-2" for="capacity">Capacidad:</label>
+            <div class="col-sm-10">
+                <input type="number" class="form-control" id="capacity" name="capacity"
+                       th:value="${space.capacity}"
+                       placeholder="Capacidad"
+                       min="1" required="true"/>
+            </div>
+        </div>
+
+        <!-- SUBMIT -->
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+</body>
+<footer th:replace="fragments/footer"/>
+</html>

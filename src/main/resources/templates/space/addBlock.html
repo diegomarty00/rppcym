@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head}"></head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<div class="container">
+    <h1>Crear bloqueo de mantenimiento</h1>
+    <h2 th:text="${space.name}">Espacio</h2>
+
+    <div th:if="${errorMessage}" class="alert alert-danger" role="alert" th:text="${errorMessage}">
+        Error
+    </div>
+
+    <form method="post" th:action="@{/space/{id}/blocks/add(id=${space.id})}">
+        <div class="form-group">
+            <label for="startDateTime">Inicio</label>
+            <input id="startDateTime" name="startDateTime" type="datetime-local" class="form-control"
+                   required="required">
+        </div>
+
+        <div class="form-group">
+            <label for="endDateTime">Fin</label>
+            <input id="endDateTime" name="endDateTime" type="datetime-local" class="form-control" required="required">
+        </div>
+
+        <div class="form-group">
+            <label for="reason">Motivo</label>
+            <input id="reason" name="reason" type="text" class="form-control" required="required">
+        </div>
+
+        <button type="submit" class="btn btn-primary">Guardar bloqueo</button>
+        <a class="btn btn-link" th:href="@{/space/{id}/availability(id=${space.id})}">Volver</a>
+    </form>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
+<body>
+<table class="table table-striped" th:fragment="spacesTable">
+    <thead>
+    <tr>
+        <th th:text="#{spaces.table.name}">Name</th>
+        <th th:text="#{spaces.table.type}">Type</th>
+        <th th:text="#{spaces.table.location}">Location</th>
+        <th th:text="#{spaces.table.capacity}">Capacity</th>
+        <th sec:authorize="hasRole('ADMIN')">Estado</th>
+        <th></th>
+        <th sec:authorize="hasRole('ADMIN')" ></th>
+        <th sec:authorize="hasRole('ADMIN')" ></th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="space : ${spaces}">
+        <td th:text="${space.name}">Name</td>
+        <td th:text="${space.type}">Type</td>
+        <td th:text="${space.location}">Location</td>
+        <td th:text="${space.capacity}">0</td>
+        <td sec:authorize="hasRole('ADMIN')">
+            <form method="post" th:action="@{/space/toggle/{id}(id=${space.id})}" style="display:inline;">
+                <button type="submit"
+                        class="btn btn-sm"
+                        th:classappend="${space.active} ? ' btn-success' : ' btn-danger'"
+                        th:text="${space.active} ? 'Activo' : 'Inactivo'"
+                        th:title="${space.active} ? 'Desactivar' : 'Activar'">
+                    Activo
+                </button>
+            </form>
+        </td>
+        <td><a th:href="@{/space/details/{id}(id=${space.id})}" th:text="#{spaces.table.details}">Details</a></td>
+        <td sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/space/edit/{id}(id=${space.id})}" th:text="#{spaces.table.edit}">Editar</a>
+        </td>
+        <td sec:authorize="hasRole('ADMIN')">
+            <form method="post" th:action="@{/space/delete/{id}(id=${space.id})}" style="display:inline;">
+                <button type="submit" class="btn btn-link p-0"
+                        th:text="#{spaces.table.delete}">Eliminar</button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

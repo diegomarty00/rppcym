@@ -1,0 +1,28 @@
+<h4 xmlns:sec="http://www.w3.org/1999/xhtml">Todos los bloqueos (histórico completo)</h4>
+<table class="table table-bordered table-striped" th:fragment="spaceBlocksHistoryTable">
+    <thead>
+    <tr>
+        <th>Inicio</th>
+        <th>Fin</th>
+        <th>Motivo</th>
+        <th>Estado</th>
+        <th sec:authorize="hasRole('ADMIN')">Acción</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="block : ${allBlocks}">
+        <td th:text="${block.startDateTime}">Inicio</td>
+        <td th:text="${block.endDateTime}">Fin</td>
+        <td th:text="${block.reason}">Motivo</td>
+        <td th:text="${block.status}">ACTIVE</td>
+        <td sec:authorize="hasRole('ADMIN')">
+            <form th:if="${block.status.name() == 'ACTIVE'}"
+                  method="post"
+                  th:action="@{/space/blocks/{id}/cancel(id=${block.id})}">
+                <button type="submit" class="btn btn-sm btn-danger">Cancelar</button>
+            </form>
+            <span th:if="${block.status.name() == 'CANCELLED'}" class="text-muted">Cancelado</span>
+        </td>
+    </tr>
+    </tbody>
+</table>

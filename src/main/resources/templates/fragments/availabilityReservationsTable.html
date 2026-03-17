@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<table class="table table-striped" th:fragment="availabilityReservationsTable">
+    <thead>
+    <tr>
+        <th th:text="#{availability.start}">Start</th>
+        <th th:text="#{availability.end}">End</th>
+        <th th:text="#{availability.user}">User</th>
+        <th th:text="#{availability.reason}">Reason</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="reservation : ${reservations}">
+        <td th:text="${reservation.startDateTime}">Start</td>
+        <td th:text="${reservation.endDateTime}">End</td>
+        <td th:text="${reservation.user.fullName}">User</td>
+        <td th:text="${reservation.reason}">Reason</td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>
