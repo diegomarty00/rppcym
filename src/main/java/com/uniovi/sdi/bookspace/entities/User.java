@@ -89,4 +89,10 @@ public class User {
     public void setPasswordConfirm(String passwordConfirm) {
         this.passwordConfirm = passwordConfirm;
     }
+
+
+    public String getFullName() {
+        return (name != null ? name : "") + " " + (lastName != null ? lastName : "");
+    }
+
 }

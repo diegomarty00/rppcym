@@ -42,9 +42,10 @@ public interface ReservationsRepository extends CrudRepository<Reservation, Long
             select r
             from Reservation r
             where (:spaceId is null or r.space.id = :spaceId)
-              and (:from is null or r.endDateTime > :from)
-              and (:to is null or r.startDateTime < :to)
-            order by r.startDateTime asc
+                  and r.endDateTime > :from
+                  and r.startDateTime < :to
+                order by r.startDateTime asc
+            
             """)
     List<Reservation> findGlobalFiltered(@Param("spaceId") Long spaceId,
                                          @Param("from") LocalDateTime from,

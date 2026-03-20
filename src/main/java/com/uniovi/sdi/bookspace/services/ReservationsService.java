@@ -46,10 +46,22 @@ public class ReservationsService {
         reservationsRepository.save(reservation);
     }
 
+
+
     public Page<Reservation> getGlobalReservations(Long spaceId,
                                                    LocalDateTime from,
                                                    LocalDateTime to,
                                                    Pageable pageable) {
+
+        from = from == null ? LocalDateTime.of(1970, 1, 1, 0, 0) : from;
+        to = to == null ? LocalDateTime.of(2100, 1, 1, 23, 59) : to;
+
+        if (from.isAfter(to)) {
+            LocalDateTime temp = from;
+            from = to;
+            to = temp;
+        }
+
         return reservationsRepository.findGlobalFilteredPage(spaceId, from, to, pageable);
     }
 
