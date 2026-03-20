@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head}"></head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+<div class="container">
+    <h1 th:text="#{reservations.add.title}">New reservation</h1>
+
+    <form method="post" th:action="@{/reservations/add}" th:object="${reservation}">
+        <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
+            <p class="mb-0" th:each="error : ${#fields.globalErrors()}" th:text="${error}">Validation error</p>
+        </div>
+
+        <div class="form-group">
+            <label for="spaceId" th:text="#{reservations.add.space}">Space</label>
+            <select class="form-control" id="spaceId" th:field="*{space.id}" required>
+                <option value="" th:text="#{reservations.add.space.placeholder}">Select a space</option>
+                <option th:each="space : ${spaces}" th:value="${space.id}" th:text="${space.name}">Space</option>
+            </select>
+            <div class="text-danger" th:if="${#fields.hasErrors('space.id')}" th:errors="*{space.id}">Space error</div>
+        </div>
+
+        <div class="form-group">
+            <label for="startDateTime" th:text="#{reservations.add.start}">Start</label>
+            <input class="form-control" id="startDateTime" type="datetime-local" th:field="*{startDateTime}" required>
+            <div class="text-danger" th:if="${#fields.hasErrors('startDateTime')}" th:errors="*{startDateTime}">Start error</div>
+        </div>
+
+        <div class="form-group">
+            <label for="endDateTime" th:text="#{reservations.add.end}">End</label>
+            <input class="form-control" id="endDateTime" type="datetime-local" th:field="*{endDateTime}" required>
+            <div class="text-danger" th:if="${#fields.hasErrors('endDateTime')}" th:errors="*{endDateTime}">End error</div>
+        </div>
+
+        <div class="form-group">
+            <label for="reason" th:text="#{reservations.add.reason}">Reason</label>
+            <textarea class="form-control" id="reason" rows="3" th:field="*{reason}"
+                      th:placeholder="#{reservations.add.reason.placeholder}"></textarea>
+        </div>
+
+        <button class="btn btn-primary" type="submit" th:text="#{reservations.add.submit}">Create reservation</button>
+        <a class="btn btn-link" th:href="@{/reservations/list}" th:text="#{reservations.add.back}">Back to my reservations</a>
+    </form>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

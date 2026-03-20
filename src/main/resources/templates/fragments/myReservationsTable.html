@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<table class="table table-striped" th:fragment="myReservationsTable">
+    <thead>
+    <tr>
+        <th th:text="#{reservations.mine.space}">Space</th>
+        <th th:text="#{reservations.mine.start}">Start</th>
+        <th th:text="#{reservations.mine.end}">End</th>
+        <th th:text="#{reservations.mine.state}">Status</th>
+        <th th:text="#{reservations.mine.actions}">Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="reservation : ${reservations}">
+        <td th:text="${reservation.space.name}">Space</td>
+        <td th:text="${reservation.startDateTime}">Start</td>
+        <td th:text="${reservation.endDateTime}">End</td>
+        <td th:text="${reservation.status}">Status</td>
+        <td>
+            <form method="post"
+                  th:if="${reservation.status.name() == 'ACTIVE'}"
+                  th:action="@{/reservations/{id}/cancel(id=${reservation.id})}">
+                <button class="btn btn-sm btn-outline-danger" type="submit" th:text="#{reservations.mine.cancelAction}">
+                    Cancel
+                </button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

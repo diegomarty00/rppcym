@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head}"></head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+<div class="container">
+    <h1 th:text="#{reservations.mine.title}">My reservations</h1>
+    <form class="form-inline mb-3" method="get" th:action="@{/reservations/list}">
+        <div class="form-group mr-2">
+            <label class="mr-2" th:text="#{reservations.mine.status}">Status</label>
+            <select class="form-control" name="status">
+                <option value="" th:selected="${status == null}" th:text="#{reservations.mine.all}">All</option>
+                <option value="ACTIVE" th:selected="${status?.name() == 'ACTIVE'}" th:text="#{reservations.mine.active}">ACTIVE</option>
+                <option value="CANCELLED" th:selected="${status?.name() == 'CANCELLED'}" th:text="#{reservations.mine.cancelled}">CANCELLED</option>
+            </select>
+        </div>
+        <button class="btn btn-primary" type="submit" th:text="#{reservations.mine.filter}">Filter</button>
+    </form>
+    <div th:replace="~{fragments/myReservationsTable :: myReservationsTable}"></div>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

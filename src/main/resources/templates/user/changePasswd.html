@@ -1,0 +1,58 @@
+<!DOCTYPE html SYSTEM "http://www.thymeleaf.org/dtd/xhtml1-strict-thymeleaf-spring4-4.dtd">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head"></head>
+<body>
+
+<nav th:replace="fragments/nav"></nav>
+
+<div class="container">
+    <h2 th:text="#{user.changePasswd.title}">Cambiar Contraseña</h2>
+
+    <!-- Formulario de cambio de contraseña -->
+    <form class="form-horizontal" th:action="@{/user/changePasswd}" th:object="${user}" method="post">
+        <!-- Contraseña nueva -->
+        <div class="form-group">
+            <label class="control-label col-sm-2" for="password"
+                   th:text="#{user.changePasswd.new}">Nueva contraseña:</label>
+            <div class="col-sm-10">
+                <input type="password" class="form-control" id="password" th:field="*{password}"
+                       th:placeholder="#{user.placeholder.changePasswd}" required />
+                <div th:if="${#fields.hasErrors('password')}" class="text-danger">
+                    <span th:errors="*{password}">Error en la nueva contraseña</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Repetir contraseña -->
+        <div class="form-group">
+            <label class="control-label col-sm-2" for="passwordConfirm"
+                   th:text="#{user.changePasswd.confirm}">Repetir contraseña:</label>
+            <div class="col-sm-10">
+                <input type="password" class="form-control" id="passwordConfirm" th:field="*{passwordConfirm}"
+                       th:placeholder="#{user.placeholder.changePasswd.confirm}" required />
+                <div th:if="${#fields.hasErrors('passwordConfirm')}" class="text-danger">
+                    <span th:errors="*{passwordConfirm}">Error al repetir la contraseña</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botón enviar -->
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-primary" th:text="#{user.changePasswd.submit}">Cambiar contraseña</button>
+            </div>
+        </div>
+
+        <!-- Mensaje de éxito o error general -->
+        <div th:if="${success}" class="text-success">
+            <span th:text="${success}">Contraseña cambiada correctamente</span>
+        </div>
+        <div th:if="${error}" class="text-danger">
+            <span th:text="${error}">Error al cambiar la contraseña</span>
+        </div>
+    </form>
+</div>
+
+<footer th:replace="fragments/footer"></footer>
+</body>
+</html>

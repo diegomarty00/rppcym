@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<table class="table table-striped" th:fragment="availabilityBlocksTable">
+    <thead>
+    <tr>
+        <th th:text="#{availability.start}">Start</th>
+        <th th:text="#{availability.end}">End</th>
+        <th th:text="#{availability.reason}">Reason</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="block : ${blocks}">
+        <td th:text="${block.startDateTime}">Start</td>
+        <td th:text="${block.endDateTime}">End</td>
+        <td th:text="${block.reason}">Reason</td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

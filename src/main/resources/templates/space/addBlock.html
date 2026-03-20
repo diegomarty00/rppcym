@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head}"></head>
+<body>
+
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<div class="container">
+    <h1 th:text="#{blocks.create.title}">Crear bloqueo de mantenimiento</h1>
+    <h2 th:text="${space.name}">Espacio</h2>
+
+    <div th:if="${#fields.hasGlobalErrors()}"
+         class="alert alert-danger"
+         role="alert"
+         th:each="error : ${#fields.globalErrors()}"
+         th:text="${error}">
+        Error
+    </div>
+
+    <form method="post" th:action="@{/space/{id}/blocks/add(id=${space.id})}" th:object="${block}">
+        <div class="form-group">
+            <label for="startDateTime" th:text="#{availability.start}">Inicio</label>
+            <input id="startDateTime"
+                   th:field="*{startDateTime}"
+                   type="datetime-local"
+                   class="form-control"
+                   required>
+            <div class="text-danger" th:if="${#fields.hasErrors('startDateTime')}" th:errors="*{startDateTime}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="endDateTime" th:text="#{availability.end}">Fin</label>
+            <input id="endDateTime"
+                   th:field="*{endDateTime}"
+                   type="datetime-local"
+                   class="form-control"
+                   required>
+            <div class="text-danger" th:if="${#fields.hasErrors('endDateTime')}" th:errors="*{endDateTime}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="reason" th:text="#{availability.reason}">Motivo</label>
+            <input id="reason"
+                   th:field="*{reason}"
+                   type="text"
+                   class="form-control"
+                   required>
+            <div class="text-danger" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" th:text="#{blocks.save}">
+            Guardar bloqueo
+        </button>
+
+        <a class="btn btn-link"
+           th:href="@{/space/{id}/availability(id=${space.id})}"
+           th:text="#{blocks.back}">
+            Volver
+        </a>
+    </form>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

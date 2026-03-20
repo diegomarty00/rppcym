@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head}"></head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<div class="container">
+    <h1 th:text="#{reservations.global.title}">Listado global de reservas</h1>
+
+    <form class="form-inline mb-3" method="get" th:action="@{/reservations/admin}">
+        <div class="form-group mr-2">
+            <label class="mr-2" for="spaceId" th:text="#{reservations.space}">Espacio</label>
+            <select id="spaceId" name="spaceId" class="form-control">
+                <option value="" th:text="#{reservations.all}">Todos</option>
+                <option th:each="space : ${spaces}"
+                        th:value="${space.id}"
+                        th:selected="${spaceId != null and space.id == spaceId}"
+                        th:text="${space.name}">
+                </option>
+            </select>
+        </div>
+
+        <div class="form-group mr-2">
+            <label class="mr-2" for="from" th:text="#{availability.from}">Desde</label>
+            <input id="from" class="form-control" type="datetime-local"
+                   name="from" th:value="${from}">
+        </div>
+
+        <div class="form-group mr-2">
+            <label class="mr-2" for="to" th:text="#{availability.to}">Hasta</label>
+            <input id="to" class="form-control" type="datetime-local"
+                   name="to" th:value="${to}">
+        </div>
+
+        <button class="btn btn-primary" type="submit" th:text="#{reservations.filter}">
+            Filtrar
+        </button>
+    </form>
+
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th th:text="#{reservations.user}">Usuario</th>
+            <th th:text="#{reservations.space}">Espacio</th>
+            <th th:text="#{availability.start}">Inicio</th>
+            <th th:text="#{availability.end}">Fin</th>
+            <th th:text="#{availability.status}">Estado</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="reservation : ${reservationsPage.content}">
+            <td th:text="${reservation.user.dni}">Usuario</td>
+            <td th:text="${reservation.space.name}">Espacio</td>
+            <td th:text="${reservation.startDateTime}">Inicio</td>
+            <td th:text="${reservation.endDateTime}">Fin</td>
+            <td th:text="${reservation.status}">Estado</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <nav th:if="${reservationsPage.totalPages > 1}">
+        <ul class="pagination">
+
+            <li class="page-item" th:classappend="${reservationsPage.first} ? ' disabled'">
+                <a class="page-link"
+                   th:href="@{/reservations/admin(page=${reservationsPage.number - 1}, spaceId=${spaceId}, from=${from}, to=${to})}"
+                   th:text="#{pagination.previous}">
+                    Anterior
+                </a>
+            </li>
+
+            <li class="page-item"
+                th:each="i : ${#numbers.sequence(0, reservationsPage.totalPages - 1)}"
+                th:classappend="${i == reservationsPage.number} ? ' active'">
+                <a class="page-link"
+                   th:text="${i + 1}"
+                   th:href="@{/reservations/admin(page=${i}, spaceId=${spaceId}, from=${from}, to=${to})}">
+                </a>
+            </li>
+
+            <li class="page-item" th:classappend="${reservationsPage.last} ? ' disabled'">
+                <a class="page-link"
+                   th:href="@{/reservations/admin(page=${reservationsPage.number + 1}, spaceId=${spaceId}, from=${from}, to=${to})}"
+                   th:text="#{pagination.next}">
+                    Siguiente
+                </a>
+            </li>
+
+        </ul>
+    </nav>
+
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
