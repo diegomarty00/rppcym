@@ -22,16 +22,20 @@
                     <span th:text="#{nav.spaces}">Espacios</span>
                 </a>
                 <div class="dropdown-menu" aria-labelledby="spacesDropdown">
-                    <a class="dropdown-item" href="/space">
+                    <a class="dropdown-item" href="/space" id="spaces-reservation">
                         <span th:text="#{space.list}">Ver espacios de reserva</span>
                     </a>
-                    <a class="dropdown-item" sec:authorize="hasRole('ADMIN')" href="/space/add">
+                    <a class="dropdown-item" sec:authorize="hasRole('ADMIN')" href="/space/add" id="spaces-add-reservation">
                         <span th:text="#{space.add}">Agregar espacios de reserva</span>
                     </a>
-                    <a class="dropdown-item" sec:authorize="hasRole('ADMIN')" href="/reservations/admin">
-                        <span th:text="#{space.reservations.list}">Listado global de reservas</span>
-                    </a>
                 </div>
+            </li>
+
+            <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                <a class="nav-link" href="/reservations/admin" id="reservations-admin">
+                    <span th:text="#{space.reservations.list}">Listado global de reservas</span>
+                    <span class="sr-only">(current)</span>
+                </a>
             </li>
 
             <li class="nav-item dropdown active" sec:authorize="hasRole('USER')">

@@ -34,8 +34,32 @@
 
         <div class="form-group">
             <label for="reason" th:text="#{reservations.add.reason}">Reason</label>
-            <textarea class="form-control" id="reason" rows="3" th:field="*{reason}"
-                      th:placeholder="#{reservations.add.reason.placeholder}"></textarea>
+            <input class="form-control" id="reason" type="text" th:field="*{reason}"
+                   th:placeholder="#{reservations.add.reason.placeholder}">
+        </div>
+
+        <div class="form-group">
+            <label for="recurrenceFrequency" th:text="#{reservations.add.recurrence.frequency}">Recurrence</label>
+            <select class="form-control" id="recurrenceFrequency" th:field="*{recurrenceFrequency}">
+                <option th:value="${T(com.uniovi.sdi.bookspace.entities.RecurrenceFrequency).NONE}"
+                        th:text="#{reservations.add.recurrence.none}">No repeat</option>
+                <option th:value="${T(com.uniovi.sdi.bookspace.entities.RecurrenceFrequency).DAILY}"
+                        th:text="#{reservations.add.recurrence.daily}">Daily</option>
+                <option th:value="${T(com.uniovi.sdi.bookspace.entities.RecurrenceFrequency).WEEKLY}"
+                        th:text="#{reservations.add.recurrence.weekly}">Weekly</option>
+                <option th:value="${T(com.uniovi.sdi.bookspace.entities.RecurrenceFrequency).MONTHLY}"
+                        th:text="#{reservations.add.recurrence.monthly}">Monthly</option>
+                <option th:value="${T(com.uniovi.sdi.bookspace.entities.RecurrenceFrequency).YEARLY}"
+                        th:text="#{reservations.add.recurrence.yearly}">Yearly</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="recurrenceEndDate" th:text="#{reservations.add.recurrence.end}">Recurrence end date</label>
+            <input class="form-control" id="recurrenceEndDate" type="date" th:field="*{recurrenceEndDate}">
+            <div class="text-danger" th:if="${#fields.hasErrors('recurrenceEndDate')}" th:errors="*{recurrenceEndDate}">
+                Recurrence end error
+            </div>
         </div>
 
         <button class="btn btn-primary" type="submit" th:text="#{reservations.add.submit}">Create reservation</button>

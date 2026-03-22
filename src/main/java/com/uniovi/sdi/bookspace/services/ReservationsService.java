@@ -1,6 +1,7 @@
 package com.uniovi.sdi.bookspace.services;
 
 import com.uniovi.sdi.bookspace.entities.Reservation;
+import com.uniovi.sdi.bookspace.entities.RecurrenceFrequency;
 import com.uniovi.sdi.bookspace.entities.ReservationStatus;
 import com.uniovi.sdi.bookspace.entities.User;
 import com.uniovi.sdi.bookspace.repositories.ReservationsRepository;
@@ -14,9 +15,11 @@ import java.util.List;
 @Service
 public class ReservationsService {
     private final ReservationsRepository reservationsRepository;
+    private final AvailabilityService availabilityService;
 
-    public ReservationsService(ReservationsRepository reservationsRepository) {
+    public ReservationsService(ReservationsRepository reservationsRepository, AvailabilityService availabilityService) {
         this.reservationsRepository = reservationsRepository;
+        this.availabilityService = availabilityService;
     }
 
     public List<Reservation> getReservationsForUser(User user, ReservationStatus status) {
@@ -29,6 +32,7 @@ public class ReservationsService {
     public void addReservation(Reservation reservation) {
         reservation.setReason(normalizeReason(reservation.getReason()));
         reservationsRepository.save(reservation);
+        createRecurringReservations(reservation);
     }
 
     public void cancelReservation(User user, Long reservationId) {
@@ -71,5 +75,38 @@ public class ReservationsService {
         }
         String trimmed = reason.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private void createRecurringReservations(Reservation baseReservation) {
+        if (baseReservation.getRecurrenceFrequency() == null ||
+                baseReservation.getRecurrenceFrequency() == RecurrenceFrequency.NONE ||
+                baseReservation.getRecurrenceEndDate() == null) {
+            return;
+        }
+
+        LocalDateTime nextStart = move(baseReservation.getStartDateTime(), baseReservation.getRecurrenceFrequency());
+        LocalDateTime nextEnd = move(baseReservation.getEndDateTime(), baseReservation.getRecurrenceFrequency());
+        while (!nextStart.toLocalDate().isAfter(baseReservation.getRecurrenceEndDate())) {
+            Reservation recurringReservation = new Reservation(
+                    baseReservation.getUser(),
+                    baseReservation.getSpace(),
+                    nextStart,
+                    nextEnd,
+                    baseReservation.getReason()
+            );
+            reservationsRepository.save(recurringReservation);
+            nextStart = move(nextStart, baseReservation.getRecurrenceFrequency());
+            nextEnd = move(nextEnd, baseReservation.getRecurrenceFrequency());
+        }
+    }
+
+    private LocalDateTime move(LocalDateTime dateTime, RecurrenceFrequency recurrenceFrequency) {
+        return switch (recurrenceFrequency) {
+            case DAILY -> dateTime.plusDays(1);
+            case WEEKLY -> dateTime.plusWeeks(1);
+            case MONTHLY -> dateTime.plusMonths(1);
+            case YEARLY -> dateTime.plusYears(1);
+            case NONE -> dateTime;
+        };
     }
 }

@@ -16,4 +16,6 @@ public interface SpacesRepository extends CrudRepository<Space, Long> {
 
     @Query("SELECT r FROM Space r WHERE (LOWER(r.name) LIKE LOWER(CONCAT('%', :busqueda, '%')) OR LOWER(r.type) LIKE LOWER(CONCAT('%', :busqueda, '%')))")
     Page<Space> searchByNameOrType(Pageable pageable, @Param("busqueda") String searchtext);
+
+    Space findByName(String name);
 }

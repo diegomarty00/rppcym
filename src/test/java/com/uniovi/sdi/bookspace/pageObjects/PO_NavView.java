@@ -2,6 +2,7 @@ package com.uniovi.sdi.bookspace.pageObjects;
 
 import com.uniovi.sdi.bookspace.util.SeleniumUtils;
 import org.junit.jupiter.api.Assertions;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import java.util.List;
@@ -33,6 +34,12 @@ public class PO_NavView extends PO_View{
         //Tiene que haber un sólo elemento.
         Assertions.assertEquals(1, elements.size());
     }
+
+    public static void clickOptionById(WebDriver driver, String id) {
+        WebElement element = driver.findElement(By.id(id));
+        element.click();
+    }
+
 
     /**
      * Selecciona el enlace de idioma correspondiente al texto textLanguage

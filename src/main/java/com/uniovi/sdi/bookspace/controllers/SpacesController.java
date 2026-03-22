@@ -8,6 +8,8 @@ import com.uniovi.sdi.bookspace.services.AvailabilityService;
 import com.uniovi.sdi.bookspace.services.MaintenanceBlocksService;
 import com.uniovi.sdi.bookspace.services.SpacesService;
 import com.uniovi.sdi.bookspace.validators.AddMaintenanceBlockValidator;
+import com.uniovi.sdi.bookspace.validators.AddSpaceValidator;
+import com.uniovi.sdi.bookspace.validators.EditSpaceValidator;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -25,14 +27,19 @@ public class SpacesController {
     private final AvailabilityService availabilityService;
     private final MaintenanceBlocksService maintenanceBlocksService;
     private final AddMaintenanceBlockValidator addMaintenanceBlockValidator;
+    private final AddSpaceValidator addSpaceValidator;
+    private final EditSpaceValidator editSpaceValidator;
 
     public SpacesController(SpacesService spacesService, AvailabilityService availabilityService,
                             MaintenanceBlocksService maintenanceBlocksService,
-                            AddMaintenanceBlockValidator addMaintenanceBlockValidator) {
+                            AddMaintenanceBlockValidator addMaintenanceBlockValidator,
+                            AddSpaceValidator addSpaceValidator, EditSpaceValidator editSpaceValidator) {
         this.spacesService = spacesService;
         this.availabilityService = availabilityService;
         this.maintenanceBlocksService = maintenanceBlocksService;
         this.addMaintenanceBlockValidator = addMaintenanceBlockValidator;
+        this.addSpaceValidator = addSpaceValidator;
+        this.editSpaceValidator = editSpaceValidator;
     }
 
 
@@ -187,10 +194,14 @@ public class SpacesController {
         return "space/add";
     }
 
+
     @PostMapping("/add")
     public String addSpaceSubmit(@Validated @ModelAttribute("space") Space space,
                                  BindingResult result,
                                  Model model) {
+
+        // Validación separada
+        addSpaceValidator.validate(space, result);
 
         if (result.hasErrors()) {
             model.addAttribute("spaceTypes", SpaceType.values());
@@ -204,6 +215,7 @@ public class SpacesController {
             model.addAttribute("spaceTypes", SpaceType.values());
             return "space/add";
         }
+
         return "redirect:/space";
     }
 
@@ -224,19 +236,30 @@ public class SpacesController {
         return "space/edit";
     }
 
-    @PostMapping(value = "/edit/{id}")
-    public String setEdit(@ModelAttribute Space space, @PathVariable Long id){
-        Space originalSpace = spacesService.getSpace(id);
-        if (originalSpace == null) {
+    @PostMapping("/edit/{id}")
+
+    public String setEdit(@Validated @ModelAttribute("space") Space space,
+                          BindingResult result,
+                          @PathVariable Long id,
+                          Model model) {
+
+        Space original = spacesService.getSpace(id);
+        if (original == null) {
             return "redirect:/space";
         }
-        originalSpace.setLocation(space.getLocation());
-        originalSpace.setCapacity(space.getCapacity());
-        originalSpace.setType(space.getType());
-        originalSpace.setName(space.getName());
-        spacesService.addSpace(originalSpace);
+        editSpaceValidator.validate(space, result);
+        if (result.hasErrors()) {
+            model.addAttribute("spaceTypes", SpaceType.values());
+            return "space/edit";
+        }
+        original.setName(space.getName());
+        original.setCapacity(space.getCapacity());
+        original.setLocation(space.getLocation());
+        original.setType(space.getType());
+        spacesService.addSpace(original);
         return "redirect:/space/details/" + id;
     }
+
 
     @PostMapping("/toggle/{id}")
     public String toggleSpaceStatus(@PathVariable Long id) {

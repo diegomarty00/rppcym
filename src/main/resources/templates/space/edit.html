@@ -15,15 +15,16 @@
         Error al actualizar el espacio.
     </div>
 
-    <form class="form-horizontal" method="post" th:action="@{'/space/edit/' + ${space.id}}">
+    <form class="form-horizontal"
+          th:object="${space}"
+          method="post"
+          th:action="@{'/space/edit/' + ${space.id}}">
 
         <!-- TYPE -->
         <div class="form-group">
-            <label class="control-label col-sm-2" for="type" th:text="#{space.type}">
-                Tipo:
-            </label>
+            <label class="control-label col-sm-2" for="type" th:text="#{space.type}"></label>
             <div class="col-sm-10">
-                <select id="type" class="form-control" name="type">
+                <select th:field="*{type}" class="form-control" id="type">
                     <option th:each="t : ${spaceTypes}"
                             th:value="${t}"
                             th:text="${t}"
@@ -35,61 +36,53 @@
 
         <!-- NAME -->
         <div class="form-group">
-            <label class="control-label col-sm-2" for="name" th:text="#{space.name}">
-                Nombre:
-            </label>
-            <div class="col-sm-10">
-                <input type="text"
-                       class="form-control"
-                       id="name"
-                       name="name"
-                       th:value="${space.name}"
-                       th:placeholder="#{space.placeholder.name}"
-                       required>
+            <label for="name" th:text="#{space.name}">Name</label>
+            <input class="form-control"
+                   id="name"
+                   th:field="*{name}"
+                   th:placeholder="#{space.placeholder.name}"/>
+
+            <!-- ERROR NAME -->
+            <div class="text-danger"
+                 th:if="${#fields.hasErrors('name')}"
+                 th:errors="*{name}">
             </div>
         </div>
 
         <!-- LOCATION -->
         <div class="form-group">
-            <label class="control-label col-sm-2" for="location" th:text="#{space.location}">
-                Ubicación:
-            </label>
-            <div class="col-sm-10">
-                <input type="text"
-                       class="form-control"
-                       id="location"
-                       name="location"
-                       th:value="${space.location}"
-                       th:placeholder="#{space.placeholder.location}"
-                       required>
+            <label for="location" th:text="#{space.location}">Location</label>
+            <input class="form-control"
+                   id="location"
+                   th:field="*{location}"
+                   th:placeholder="#{space.placeholder.location}"/>
+
+            <div class="text-danger"
+                 th:if="${#fields.hasErrors('location')}"
+                 th:errors="*{location}">
             </div>
         </div>
 
         <!-- CAPACITY -->
         <div class="form-group">
-            <label class="control-label col-sm-2" for="capacity" th:text="#{space.capacity}">
-                Capacidad:
-            </label>
-            <div class="col-sm-10">
-                <input type="number"
-                       class="form-control"
-                       id="capacity"
-                       name="capacity"
-                       th:value="${space.capacity}"
-                       th:placeholder="#{space.placeholder.capacity}"
-                       min="1"
-                       required>
+            <label for="capacity" th:text="#{space.capacity}">Capacity</label>
+            <input class="form-control"
+                   id="capacity"
+                   th:field="*{capacity}"
+                   th:placeholder="#{space.placeholder.capacity}"/>
+
+            <!-- ERROR CAPACITY -->
+            <div class="text-danger"
+                 th:if="${#fields.hasErrors('capacity')}"
+                 th:errors="*{capacity}">
             </div>
         </div>
 
         <!-- SUBMIT -->
         <div class="form-group">
             <div class="col-sm-offset-2 col-sm-10">
-                <button type="submit"
-                        class="btn btn-primary"
-                        th:text="#{space.edit.save}">
-                    Guardar cambios
-                </button>
+                <button type="submit" class="btn btn-primary"
+                        th:text="#{space.edit.save}">Guardar cambios</button>
             </div>
         </div>
 

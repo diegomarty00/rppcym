@@ -29,17 +29,22 @@ public class AddMaintenanceBlockValidator implements Validator {
         return MaintenanceBlock.class.equals(aClass);
     }
 
+
     @Override
     public void validate(Object target, Errors errors) {
+
         MaintenanceBlock block = (MaintenanceBlock) target;
 
         Space space = block.getSpace();
+
+        // --- VALIDACIONES BÁSICAS ---
         if (space == null) {
-            errors.reject("blocks.add.error.space.invalid");
+            errors.rejectValue("startDateTime", "blocks.add.error.space.invalid");
             return;
         }
+
         if (!space.isActive()) {
-            errors.reject("blocks.add.error.space.inactive");
+            errors.rejectValue("startDateTime", "blocks.add.error.space.inactive");
         }
 
         if (block.getStartDateTime() == null) {
@@ -52,37 +57,39 @@ public class AddMaintenanceBlockValidator implements Validator {
             errors.rejectValue("reason", "blocks.add.error.reason.required");
         }
 
-        if (errors.hasFieldErrors("startDateTime") || errors.hasFieldErrors("endDateTime")) {
-            return;
-        }
+        // Si ya hay errores, no seguimos
+        if (errors.hasErrors()) return;
 
+        // --- VALIDACIÓN DE RANGO ---
         if (!block.getStartDateTime().isBefore(block.getEndDateTime())) {
             errors.rejectValue("startDateTime", "blocks.add.error.range");
-        }
-
-        if (errors.hasFieldErrors("startDateTime")) {
             return;
         }
 
+        // --- SOLAPAMIENTO CON BLOQUEOS ---
         List<MaintenanceBlock> overlappingBlocks =
-                maintenanceBlockRepository.findBySpaceAndStatusAndEndDateTimeAfterAndStartDateTimeBefore(
-                        space,
-                        BlockStatus.ACTIVE,
+                maintenanceBlockRepository.findActiveOverlappingBlocks(
+                        space.getId(),
                         block.getStartDateTime(),
                         block.getEndDateTime()
                 );
+
         if (!overlappingBlocks.isEmpty()) {
-            errors.reject("blocks.add.error.overlap.block");
+            errors.rejectValue("startDateTime", "blocks.add.error.overlap.block");
         }
 
+        // --- SOLAPAMIENTO CON RESERVAS ---
         List<Reservation> overlappingReservations =
                 reservationsRepository.findActiveReservationsInRange(
                         space,
                         block.getStartDateTime(),
                         block.getEndDateTime()
                 );
+
         if (!overlappingReservations.isEmpty()) {
-            errors.reject("blocks.add.error.overlap.reservation");
+            errors.rejectValue("startDateTime", "blocks.add.error.overlap.reservation");
         }
+
+
     }
 }

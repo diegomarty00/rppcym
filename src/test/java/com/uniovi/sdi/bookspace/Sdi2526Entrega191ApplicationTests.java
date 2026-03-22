@@ -25,6 +25,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.support.ui.Select;
 import org.springframework.boot.test.context.SpringBootTest;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -34,12 +35,14 @@ import java.util.List;
 class Sdi2526Entrega191ApplicationTests {
     static String PathFirefox = "C:\\Program Files\\Mozilla Firefox\\firefox.exe";
 
-    static String GeckodriverRutaAdrian = "C:\\Users\\adria\\Desktop\\Burgui\\Clase\\Ingenieria\\Asignaturas\\SDI\\p6\\PL-SDI-SesiÃ³n5-material\\geckodriver.exe";
+    static String GeckodriverRutaAdrian = "C:\\Users\\adria\\Desktop\\Burgui\\Clase\\Ingenieria\\Asignaturas\\SDI\\p6\\PL-SDI-Sesión5-material\\geckodriver.exe";
     static String GeckodriverRutaMario = "C:\\Uniovi\\Tercero\\SDI\\Sesion6\\PL-SDI-Sesión5-material\\geckodriver.exe";
+    static String GeckodriverRutaDiego = "C:\\Dev\\tools\\selenium\\geckodriver.exe";
 
-    static WebDriver driver = getDriver(PathFirefox, GeckodriverRutaMario);
+    static WebDriver driver = getDriver(PathFirefox, GeckodriverRutaDiego);
     static String URL = "http://localhost:8090";
     private static final DateTimeFormatter DATE_TIME_FORM_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+    private static final DateTimeFormatter DATE_FORM_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     public static WebDriver getDriver(String PathFirefox, String Geckodriver) {
         System.setProperty("webdriver.firefox.bin", PathFirefox);
@@ -72,25 +75,75 @@ class Sdi2526Entrega191ApplicationTests {
         PO_LoginView.fillLoginForm(driver, "77777777Y", "ClaveSegura#2026");
     }
 
+    private void loginAsAdmin() {
+        PO_HomeView.clickOption(driver, "login", "class", "btn btn-primary");
+        PO_LoginView.fillLoginForm(driver, "12345678Z", "@Dm1n1str@D0r");
+    }
+
+    private LocalDateTime base = LocalDateTime.now().plusDays(1)
+            .withHour(9).withMinute(0).withSecond(0).withNano(0);
+
+    private void setDateTimeInput(String inputId, LocalDateTime value) {
+        WebElement input = driver.findElement(By.id(inputId));
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('input')); arguments[0].dispatchEvent(new Event('change'));",
+                input, value.format(DATE_TIME_FORM_FORMAT));
+    }
+
+    private void setDateInput(String inputId, LocalDate value) {
+        WebElement input = driver.findElement(By.id(inputId));
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('input')); arguments[0].dispatchEvent(new Event('change'));",
+                input, value.format(DATE_FORM_FORMAT));
+    }
+
     private void fillReservationForm(String spaceName, LocalDateTime startDateTime,
                                      LocalDateTime endDateTime, String reason) {
         new Select(driver.findElement(By.id("spaceId"))).selectByVisibleText(spaceName);
+        setDateTimeInput("startDateTime", startDateTime);
+        setDateTimeInput("endDateTime", endDateTime);
+        WebElement reasonInput = driver.findElement(By.id("reason"));
+        reasonInput.click();
+        reasonInput.clear();
+        reasonInput.sendKeys(reason);
+
+        driver.findElement(By.cssSelector("form button[type='submit']")).click();
+    }
+
+
+    private void fillBlockForm(String start, String end, String reason) {
 
         WebElement startInput = driver.findElement(By.id("startDateTime"));
         ((JavascriptExecutor) driver).executeScript(
                 "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('input')); arguments[0].dispatchEvent(new Event('change'));",
-                startInput, startDateTime.format(DATE_TIME_FORM_FORMAT));
+                startInput, start);
 
         WebElement endInput = driver.findElement(By.id("endDateTime"));
         ((JavascriptExecutor) driver).executeScript(
                 "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('input')); arguments[0].dispatchEvent(new Event('change'));",
-                endInput, endDateTime.format(DATE_TIME_FORM_FORMAT));
+                endInput, end);
+
+        driver.findElement(By.id("reason")).clear();
+        driver.findElement(By.id("reason")).sendKeys(reason);
+
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+    }
+
+
+    private void fillRecurringReservationForm(String spaceName, LocalDateTime startDateTime,
+                                              LocalDateTime endDateTime, String reason,
+                                              String recurrenceFrequency, LocalDate recurrenceEndDate) {
+        new Select(driver.findElement(By.id("spaceId"))).selectByVisibleText(spaceName);
+        setDateTimeInput("startDateTime", startDateTime);
+        setDateTimeInput("endDateTime", endDateTime);
 
         WebElement reasonInput = driver.findElement(By.id("reason"));
         reasonInput.click();
         reasonInput.clear();
         reasonInput.sendKeys(reason);
 
+        new Select(driver.findElement(By.id("recurrenceFrequency"))).selectByValue(recurrenceFrequency);
+        setDateInput("recurrenceEndDate", recurrenceEndDate);
         driver.findElement(By.cssSelector("form button[type='submit']")).click();
     }
 
@@ -148,8 +201,7 @@ class Sdi2526Entrega191ApplicationTests {
     @Test
     @Order(5)
     public void PR05() {
-        PO_HomeView.clickOption(driver, "login", "class", "btn btn-primary");
-        PO_LoginView.fillLoginForm(driver, "12345678Z", "@Dm1n1str@D0r");
+        loginAsAdmin();
         String checkText = PO_HomeView.getP().getString("space.reservations.list", PO_Properties.getSPANISH());
         WebElement title = driver.findElement(By.tagName("h1"));
         Assertions.assertEquals(checkText, title.getText());
@@ -161,7 +213,7 @@ class Sdi2526Entrega191ApplicationTests {
     public void PR06() {
         PO_HomeView.clickOption(driver, "login", "class", "btn btn-primary");
         PO_LoginView.fillLoginForm(driver, "77777777Y", "ClaveSegura#2026");
-        String checkText = PO_HomeView.getP().getString("space.title", PO_Properties.getSPANISH());
+        String checkText = PO_HomeView.getP().getString("spaces.title", PO_Properties.getSPANISH());
         List<WebElement> result = PO_View.checkElementBy(driver, "text", checkText);
         Assertions.assertEquals(checkText, result.getFirst().getText());
     }
@@ -210,7 +262,303 @@ class Sdi2526Entrega191ApplicationTests {
         PO_NavView.clickOption(driver, "logout", "@href", "login");
     }
 
+    // Registrar un nuevo espacio con datos válidos (administrador)
+    @Test
+    @Order(11)
+    public void PR11() {
+        loginAsAdmin();
 
+        driver.findElement(By.id("spacesDropdown")).click();
+        PO_NavView.clickOption(driver, "space/add", "id", "type");
+
+        // Rellenar formulario
+        driver.findElement(By.id("type")).sendKeys("AULA");
+        driver.findElement(By.id("name")).sendKeys("Espacio Test 11");
+        driver.findElement(By.id("location")).sendKeys("Planta 1");
+        driver.findElement(By.id("capacity")).sendKeys("20");
+
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+
+        driver.findElement(By.id("spacesDropdown")).click();
+        driver.findElement(By.xpath("//a[@href='/space']")).click();
+
+        PO_View.checkElementBy(driver, "text", "Espacio Test 11");
+
+    }
+
+    // Registrar un nuevo espacio con datos inválidos (nombre vacío)
+    @Test
+    @Order(12)
+    public void PR12() {
+        loginAsAdmin();
+
+        driver.findElement(By.id("spacesDropdown")).click();
+        PO_NavView.clickOption(driver, "space/add", "id", "type");
+
+        driver.findElement(By.id("type")).sendKeys("AULA");
+        driver.findElement(By.id("name")).sendKeys("");
+        driver.findElement(By.id("location")).sendKeys("Planta 2");
+        driver.findElement(By.id("capacity")).sendKeys("15");
+
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+
+        PO_View.checkElementByKey(driver, "space.error.empty.name", PO_Properties.getSPANISH());
+
+    }
+
+    // Registrar un nuevo espacio con datos inválidos (capacidad menor que 1)
+    @Test
+    @Order(13)
+    public void PR13() {
+        loginAsAdmin();
+
+        driver.findElement(By.id("spacesDropdown")).click();
+        PO_NavView.clickOption(driver, "space/add", "id", "type");
+
+        driver.findElement(By.id("type")).sendKeys("AULA");
+        driver.findElement(By.id("name")).sendKeys("Espacio Inválido");
+        driver.findElement(By.id("location")).sendKeys("Planta -1");
+        driver.findElement(By.id("capacity")).sendKeys("0");
+
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+
+        PO_View.checkElementByKey(driver, "space.error.capacity", PO_Properties.getSPANISH());
+    }
+
+    // Registrar espacio con el mismo nombre que otro activo
+    @Test
+    @Order(14)
+    public void PR14() {
+        loginAsAdmin();
+
+        driver.findElement(By.id("spacesDropdown")).click();
+        PO_NavView.clickOption(driver, "space/add", "id", "type");
+
+        driver.findElement(By.id("type")).sendKeys("AULA");
+        driver.findElement(By.id("name")).sendKeys("Sala Azul"); // ya existe
+        driver.findElement(By.id("location")).sendKeys("Planta 0");
+        driver.findElement(By.id("capacity")).sendKeys("40");
+
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+
+        PO_View.checkElementByKey(driver, "space.error.duplicate", PO_Properties.getSPANISH());
+    }
+
+    // Editar un espacio existente con datos válidos
+    @Test
+    @Order(15)
+    public void PR15() {
+        loginAsAdmin();
+
+        driver.findElement(By.id("spacesDropdown")).click();
+
+        PO_NavView.clickOptionById(driver, "spaces-reservation");
+
+        driver.findElements(By.xpath("//a[contains(@href,'/space/edit/')]")).get(0).click();
+
+        WebElement name = driver.findElement(By.id("name"));
+        name.clear();
+        name.sendKeys("Espacio Editado 15");
+
+        WebElement cap = driver.findElement(By.id("capacity"));
+        cap.clear();
+        cap.sendKeys("50");
+
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+
+        PO_View.checkElementBy(driver, "text", "Espacio Editado 15");
+    }
+
+    // Editar un espacio existente con datos inválidos (capacidad menor que 1)
+    @Test
+    @Order(16)
+    public void PR16() {
+        loginAsAdmin();
+
+        driver.findElement(By.id("spacesDropdown")).click();
+        PO_NavView.clickOptionById(driver, "spaces-reservation");
+
+        driver.findElements(By.xpath("//a[contains(@href,'/space/edit/')]")).get(0).click();
+
+        WebElement cap = driver.findElement(By.id("capacity"));
+        cap.clear();
+        cap.sendKeys("0");
+
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+
+        PO_View.checkElementByKey(driver, "space.error.capacity", PO_Properties.getSPANISH());
+    }
+
+    // Desactivar un espacio y verificar que no se puede reservar
+    @Test
+    @Order(17)
+    public void PR17() {
+        loginAsAdmin();
+
+        driver.findElement(By.id("spacesDropdown")).click();
+        PO_NavView.clickOptionById(driver, "spaces-reservation");
+
+        driver.findElements(By.xpath("//form[contains(@action,'/space/toggle')]")).get(0).submit();
+
+        PO_View.checkElementBy(driver, "text", "Inactivo");
+    }
+
+    // Activar un espacio y verificar que sí se puede reservar
+    @Test
+    @Order(18)
+    public void PR18() {
+        loginAsAdmin();
+
+        driver.findElement(By.id("spacesDropdown")).click();
+        PO_NavView.clickOptionById(driver, "spaces-reservation");
+
+        driver.findElements(By.xpath("//form[contains(@action,'/space/toggle')]")).get(0).submit();
+
+        PO_View.checkElementBy(driver, "text", "Activo");
+    }
+
+    // Crear un bloqueo de mantenimiento válido
+    @Test
+    @Order(19)
+    public void PR19() {
+        loginAsAdmin();
+
+        driver.findElement(By.id("spacesDropdown")).click();
+        PO_NavView.clickOptionById(driver, "spaces-reservation");
+
+        driver.findElements(By.xpath("//a[contains(@href,'/space/details')]")).get(0).click();
+        driver.findElement(By.xpath("//a[contains(@href,'/availability')]")).click();
+        driver.findElement(By.xpath("//a[contains(@href,'/blocks/add')]")).click();
+
+        // Crear un bloqueo válido (que NO solape)
+        // Propuesta: 1 día después de base, a partir de las 20:00 → 22:00
+        LocalDateTime start = base.plusDays(1).withHour(20).withMinute(0);
+        LocalDateTime end = start.plusHours(2);
+
+        fillBlockForm(start.toString(), end.toString(), "Bloqueo válido");
+
+        PO_View.checkElementBy(driver, "text", "Bloqueo válido");
+    }
+
+    // Crear un bloqueo solapado con otro bloqueo (debe fallar)
+    @Test
+    @Order(20)
+    public void PR20() {
+        loginAsAdmin();
+
+        driver.findElement(By.id("spacesDropdown")).click();
+        PO_NavView.clickOptionById(driver, "spaces-reservation");
+
+        driver.findElements(By.xpath("//a[contains(@href,'/space/details')]")).get(0).click();
+        driver.findElement(By.xpath("//a[contains(@href,'/availability')]")).click();
+
+        driver.findElement(By.xpath("//a[contains(@href,'/blocks/add')]")).click();
+
+        // solapa con 11:00 – 13:00
+        String start = base.plusHours(1).plusMinutes(30).toString(); // 10:30
+        String end = base.plusHours(3).plusMinutes(50).toString(); // 12:50
+
+        fillBlockForm(start.toString(), end.toString(), "Solape bloqueo");
+
+        PO_View.checkElementByKey(driver, "blocks.add.error.overlap.block", PO_Properties.getSPANISH());
+    }
+
+    // Crear un bloqueo solapado con una reserva activa (debe fallar)
+    @Test
+    @Order(21)
+    public void PR21() {
+        loginAsAdmin();
+
+        driver.findElement(By.id("spacesDropdown")).click();
+        PO_NavView.clickOptionById(driver, "spaces-reservation");
+
+        driver.findElements(By.xpath("//a[contains(@href,'/space/details')]")).get(0).click();
+        driver.findElement(By.xpath("//a[contains(@href,'/availability')]")).click();
+        driver.findElement(By.xpath("//a[contains(@href,'/blocks/add')]")).click();
+
+        // solapa con reserva 09:00 – 11:00
+        String start = base.minusMinutes(30).toString(); // 08:30
+        String end = base.plusHours(1).toString();     // 10:00
+
+        fillBlockForm(start, end, "Solape reserva");
+
+        PO_View.checkElementByKey(driver, "blocks.add.error.overlap.reservation", PO_Properties.getSPANISH());
+    }
+
+
+    // Cancelar un bloqueo de mantenimiento y verificar que deja de impedir reservas
+    @Test
+    @Order(22)
+    public void PR22() {
+        loginAsAdmin();
+
+        driver.findElement(By.id("spacesDropdown")).click();
+        PO_NavView.clickOptionById(driver, "spaces-reservation");
+
+        driver.findElements(By.xpath("//a[contains(@href,'/space/details')]")).get(0).click();
+        driver.findElement(By.xpath("//a[contains(@href,'/availability')]")).click();
+        driver.findElements(By.xpath("//form[contains(@action,'cancel')]/button")).get(0).click();
+
+        PO_View.checkElementBy(driver, "text", "Cancelado");
+    }
+
+    // Consultar el listado global de reservas
+    @Test
+    @Order(23)
+    public void PR23() {
+        loginAsAdmin();
+
+        PO_View.checkElementByKey(driver, "space.reservations.list", PO_Properties.getSPANISH());
+    }
+
+    // Filtrar listado global de reservas por espacio (desplegable)
+    @Test
+    @Order(24)
+    public void PR24() {
+        loginAsAdmin();
+
+        driver.navigate().to(URL + "/reservations/admin");
+
+        Select select = new Select(driver.findElement(By.id("spaceId")));
+        select.selectByIndex(1); // Espacio en posición 1 del combo
+
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+
+        PO_View.checkElementByKey(driver, "space.reservations.list", PO_Properties.getSPANISH());
+    }
+
+
+    // Filtrar listado global de reservas por rango de fechas
+    @Test
+    @Order(25)
+    public void PR25() {
+        loginAsAdmin();
+
+        // Ir directamente al listado global
+        driver.navigate().to(URL + "/reservations/admin");
+
+        // Fechas exactas que pides: 2026-03-22T09:00 → 2026-03-22T10:00
+        LocalDateTime fromDate = base.plusDays(1).withHour(9).withMinute(0);   // 2026-03-22T09:00
+        LocalDateTime toDate   = base.plusDays(1).withHour(10).withMinute(0);  // 2026-03-22T10:00
+
+        WebElement fromInput = driver.findElement(By.id("from"));
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('input')); arguments[0].dispatchEvent(new Event('change'));",
+                fromInput, fromDate.format(DATE_TIME_FORM_FORMAT)
+        );
+
+        WebElement toInput = driver.findElement(By.id("to"));
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('input')); arguments[0].dispatchEvent(new Event('change'));",
+                toInput, toDate.format(DATE_TIME_FORM_FORMAT)
+        );
+
+        // Click en Filtrar
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+
+        // Debe seguir apareciendo la tabla
+        PO_View.checkElementByKey(driver, "space.reservations.list", PO_Properties.getSPANISH());
+    }
 
     @Test
     @Order(30)
@@ -286,7 +634,7 @@ class Sdi2526Entrega191ApplicationTests {
 
         LocalDateTime startDateTime = LocalDateTime.now().plusDays(1).withHour(12).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime endDateTime = startDateTime.plusHours(1);
-        fillReservationForm("Sala Azul", startDateTime, endDateTime, "Reserva en bloqueo");
+        fillReservationForm("Aula 101", startDateTime, endDateTime, "Reserva en bloqueo");
 
         String errorText = PO_HomeView.getP().getString("reservations.add.error.blocked", PO_Properties.getSPANISH());
         List<WebElement> result = PO_View.checkElementBy(driver, "text", errorText);
@@ -357,8 +705,17 @@ class Sdi2526Entrega191ApplicationTests {
     @Test
     @Order(39)
     public void PR39() {
-        PO_HomeView.checkChangeLanguage(driver, "btnSpanish", "btnEnglish",
-                PO_Properties.getSPANISH(), PO_Properties.getENGLISH());
+        loginAsAdmin();
+        PO_View.checkElementBy(driver, "text", "Espacios"); // nav.spaces en español
+
+        PO_NavView.changeLanguage(driver, "btnEnglish");
+        PO_View.checkElementBy(driver, "text", "Spaces");
+
+        PO_NavView.changeLanguage(driver, "btnFrench");
+        PO_View.checkElementBy(driver, "text", "Espaces");
+
+        PO_NavView.changeLanguage(driver, "btnSpanish");
+        PO_View.checkElementBy(driver, "text", "Espacios");
     }
 
     //Pr40 Acceso denegado de usuario estándar a recursos de administración
@@ -399,8 +756,64 @@ class Sdi2526Entrega191ApplicationTests {
         driver.navigate().to(URL + "/reservations/list");
 
         List<WebElement> result = PO_View.checkElementBy(driver, "free",
-                "//tbody/tr[td[contains(text(),'Sala Azul')] and td[contains(text(),'ACTIVE')]]");
+                "//tbody/tr[td[contains(text(),'Aula 101')] and td[contains(text(),'ACTIVE')]]");
         Assertions.assertFalse(result.isEmpty(), "La reserva ajena no debería cancelarse");
+    }
+
+    @Test
+    @Order(42)
+    public void PR42() {
+        loginAsStandardUser();
+
+        driver.findElement(By.id("reservationsDropdown")).click();
+        PO_NavView.clickOption(driver, "reservations/add", "id", "spaceId");
+
+        LocalDateTime startDateTime = LocalDateTime.now().plusDays(15).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime endDateTime = startDateTime.plusHours(2);
+        LocalDate recurrenceEndDate = startDateTime.toLocalDate().plusWeeks(3);
+        fillRecurringReservationForm("Cowork 3", startDateTime, endDateTime, "Reserva recurrente semanal",
+                "WEEKLY", recurrenceEndDate);
+
+        String listTitle = PO_HomeView.getP().getString("reservations.mine.title", PO_Properties.getSPANISH());
+        List<WebElement> titleResult = PO_View.checkElementBy(driver, "text", listTitle);
+        Assertions.assertFalse(titleResult.isEmpty());
+        Assertions.assertFalse(PO_View.checkElementBy(driver, "text", startDateTime.toString()).isEmpty());
+        Assertions.assertFalse(PO_View.checkElementBy(driver, "text", startDateTime.plusWeeks(1).toString()).isEmpty());
+        Assertions.assertFalse(PO_View.checkElementBy(driver, "text", startDateTime.plusWeeks(2).toString()).isEmpty());
+        Assertions.assertFalse(PO_View.checkElementBy(driver, "text", startDateTime.plusWeeks(3).toString()).isEmpty());
+    }
+
+    @Test
+    @Order(43)
+    public void PR43() {
+        loginAsStandardUser();
+
+        driver.findElement(By.id("reservationsDropdown")).click();
+        PO_NavView.clickOption(driver, "reservations/add", "id", "spaceId");
+
+        LocalDateTime conflictingStartDateTime = LocalDateTime.now().plusDays(23).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime conflictingEndDateTime = conflictingStartDateTime.plusHours(2);
+        fillReservationForm("Cowork 3", conflictingStartDateTime, conflictingEndDateTime, "Reserva existente");
+
+        String listTitle = PO_HomeView.getP().getString("reservations.mine.title", PO_Properties.getSPANISH());
+        List<WebElement> titleResult = PO_View.checkElementBy(driver, "text", listTitle);
+        Assertions.assertFalse(titleResult.isEmpty());
+
+        driver.findElement(By.id("reservationsDropdown")).click();
+        PO_NavView.clickOption(driver, "reservations/add", "id", "spaceId");
+
+        LocalDateTime startDateTime = conflictingStartDateTime.minusWeeks(1);
+        LocalDateTime endDateTime = conflictingEndDateTime.minusWeeks(1);
+        fillRecurringReservationForm("Cowork 3", startDateTime, endDateTime, "Reserva recurrente invalida",
+                "WEEKLY", conflictingStartDateTime.toLocalDate());
+
+        String errorText = PO_HomeView.getP().getString("reservations.add.error.overlap", PO_Properties.getSPANISH());
+        List<WebElement> result = PO_View.checkElementBy(driver, "text", errorText);
+        Assertions.assertEquals(errorText, result.getFirst().getText());
+
+        driver.navigate().to(URL + "/reservations/list");
+        Assertions.assertTrue(driver.findElements(By.xpath(
+                "//tr[td[contains(text(),'" + startDateTime + "')]]")).isEmpty());
     }
 
 }

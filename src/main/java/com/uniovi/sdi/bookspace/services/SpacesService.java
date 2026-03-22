@@ -77,4 +77,10 @@ public class SpacesService {
     public void delete(Long id) {
         spacesRepository.deleteById(id);
     }
+
+
+    public Space getSpaceByName(String name) {
+        return spacesRepository.findByName(name);
+    }
+
 }

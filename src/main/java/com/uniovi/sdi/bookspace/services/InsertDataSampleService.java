@@ -1,9 +1,6 @@
 package com.uniovi.sdi.bookspace.services;
 
-import com.uniovi.sdi.bookspace.entities.MaintenanceBlock;
-import com.uniovi.sdi.bookspace.entities.Reservation;
-import com.uniovi.sdi.bookspace.entities.Space;
-import com.uniovi.sdi.bookspace.entities.User;
+import com.uniovi.sdi.bookspace.entities.*;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
@@ -49,6 +46,66 @@ public class InsertDataSampleService {
         seedWriteService.saveReservation(new Reservation(user1, space1, tomorrow9, tomorrow11, "Reunión de equipo"));
         seedWriteService.saveReservation(new Reservation(user1, space2, tomorrow14, tomorrow16, "Formación"));
         seedWriteService.saveBlock(new MaintenanceBlock(space1, tomorrow11, tomorrow14, "Mantenimiento"));
+        
+
+        seedWriteService.saveReservation(
+                new Reservation(user1, space1, tomorrow9, tomorrow9.plusHours(2), "Reunión 1")
+        );
+        seedWriteService.saveReservation(
+                new Reservation(user1, space1, tomorrow9.plusDays(1), tomorrow9.plusDays(1).plusHours(2), "Reunión 2")
+        );
+        seedWriteService.saveReservation(
+                new Reservation(user2, space1, tomorrow9.plusDays(2), tomorrow9.plusDays(2).plusHours(2), "Reunión 3")
+        );
+
+        seedWriteService.saveReservation(
+                new Reservation(user2, space2, tomorrow9.plusHours(3), tomorrow9.plusHours(5), "Clase 1")
+        );
+        seedWriteService.saveReservation(
+                new Reservation(user4, space2, tomorrow9.plusDays(3), tomorrow9.plusDays(3).plusHours(2), "Clase 2")
+        );
+        seedWriteService.saveReservation(
+                new Reservation(user4, space2, tomorrow9.plusDays(4), tomorrow9.plusDays(4).plusHours(3), "Clase 3")
+        );
+
+        // Reserva en Cowork 3
+        seedWriteService.saveReservation(
+                new Reservation(user5, space3, tomorrow9.plusHours(1), tomorrow9.plusHours(3), "Trabajo individual")
+        );
+        seedWriteService.saveReservation(
+                new Reservation(user5, space3, tomorrow9.plusDays(2), tomorrow9.plusDays(2).plusHours(2), "Trabajo 2")
+        );
+
+        // Reserva CANCELADA para que PR23 la vea
+        Reservation cancelled = new Reservation(user1, space1,
+                tomorrow9.plusDays(5),
+                tomorrow9.plusDays(5).plusHours(1),
+                "Reserva cancelada");
+        cancelled.setStatus(ReservationStatus.CANCELLED);
+        seedWriteService.saveReservation(cancelled);
+
+        // BLOQUEOS de mantenimiento
+        seedWriteService.saveBlock(
+                new MaintenanceBlock(space1,
+                        tomorrow9.plusHours(2),
+                        tomorrow9.plusHours(4),
+                        "Limpieza rápida")
+        );
+
+        seedWriteService.saveBlock(
+                new MaintenanceBlock(space1,
+                        tomorrow9.plusDays(2).plusHours(2),
+                        tomorrow9.plusDays(2).plusHours(4),
+                        "Mantenimiento programado")
+        );
+
+        seedWriteService.saveBlock(
+                new MaintenanceBlock(space2,
+                        tomorrow9.plusDays(1).plusHours(1),
+                        tomorrow9.plusDays(1).plusHours(3),
+                        "Avería equipo")
+        );
+
     }
 }
 

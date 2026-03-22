@@ -49,7 +49,7 @@
         </thead>
 
         <tbody>
-        <tr th:each="reservation : ${reservationsPage.content}">
+        <tr th:each="reservation : ${reservationsPage}">
             <td th:text="${reservation.user.dni}">Usuario</td>
             <td th:text="${reservation.space.name}">Espacio</td>
             <td th:text="${reservation.startDateTime}">Inicio</td>

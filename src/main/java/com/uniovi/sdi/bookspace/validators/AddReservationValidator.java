@@ -1,6 +1,7 @@
 package com.uniovi.sdi.bookspace.validators;
 
 import com.uniovi.sdi.bookspace.entities.Reservation;
+import com.uniovi.sdi.bookspace.entities.RecurrenceFrequency;
 import com.uniovi.sdi.bookspace.entities.Space;
 import com.uniovi.sdi.bookspace.services.AvailabilityService;
 import com.uniovi.sdi.bookspace.services.SpacesService;
@@ -71,7 +72,19 @@ public class AddReservationValidator implements Validator {
             errors.rejectValue("startDateTime", "reservations.add.error.past");
         }
 
-        if (space == null || errors.hasFieldErrors("startDateTime")) {
+        if (reservation.getRecurrenceFrequency() == null) {
+            reservation.setRecurrenceFrequency(RecurrenceFrequency.NONE);
+        }
+
+        if (reservation.getRecurrenceFrequency() != RecurrenceFrequency.NONE) {
+            if (reservation.getRecurrenceEndDate() == null) {
+                errors.rejectValue("recurrenceEndDate", "reservations.add.error.recurrenceEnd.required");
+            } else if (reservation.getRecurrenceEndDate().isBefore(startDateTime.toLocalDate())) {
+                errors.rejectValue("recurrenceEndDate", "reservations.add.error.recurrenceEnd.range");
+            }
+        }
+
+        if (space == null || errors.hasFieldErrors("startDateTime") || errors.hasFieldErrors("recurrenceEndDate")) {
             return;
         }
 
@@ -82,5 +95,35 @@ public class AddReservationValidator implements Validator {
         if (!availabilityService.getActiveBlocksInRange(space, startDateTime, endDateTime).isEmpty()) {
             errors.reject("reservations.add.error.blocked");
         }
+
+        if (errors.hasErrors() || reservation.getRecurrenceFrequency() == RecurrenceFrequency.NONE ||
+                reservation.getRecurrenceEndDate() == null) {
+            return;
+        }
+
+        LocalDateTime nextStartDateTime = move(startDateTime, reservation.getRecurrenceFrequency());
+        LocalDateTime nextEndDateTime = move(endDateTime, reservation.getRecurrenceFrequency());
+        while (!nextStartDateTime.toLocalDate().isAfter(reservation.getRecurrenceEndDate())) {
+            if (!availabilityService.getActiveReservationsInRange(space, nextStartDateTime, nextEndDateTime).isEmpty()) {
+                errors.reject("reservations.add.error.overlap");
+                return;
+            }
+            if (!availabilityService.getActiveBlocksInRange(space, nextStartDateTime, nextEndDateTime).isEmpty()) {
+                errors.reject("reservations.add.error.blocked");
+                return;
+            }
+            nextStartDateTime = move(nextStartDateTime, reservation.getRecurrenceFrequency());
+            nextEndDateTime = move(nextEndDateTime, reservation.getRecurrenceFrequency());
+        }
+    }
+
+    private LocalDateTime move(LocalDateTime dateTime, RecurrenceFrequency recurrenceFrequency) {
+        return switch (recurrenceFrequency) {
+            case DAILY -> dateTime.plusDays(1);
+            case WEEKLY -> dateTime.plusWeeks(1);
+            case MONTHLY -> dateTime.plusMonths(1);
+            case YEARLY -> dateTime.plusYears(1);
+            case NONE -> dateTime;
+        };
     }
 }
