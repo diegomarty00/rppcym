@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{fragments/head :: head}"></head>
 <body>
 <div th:replace="~{fragments/nav :: nav}"></div>
@@ -35,6 +35,11 @@
         <button class="btn btn-primary" type="submit" th:text="#{reservations.filter}">
             Filtrar
         </button>
+        <a class="btn btn-primary ml-2" sec:authorize="hasRole('ADMIN')"
+           th:href="@{/reservations/admin/export(spaceId=${spaceId}, from=${from}, to=${to})}"
+           th:text="#{reservations.exportCsv}">
+            Exportar CSV
+        </a>
     </form>
 
     <table class="table table-striped">

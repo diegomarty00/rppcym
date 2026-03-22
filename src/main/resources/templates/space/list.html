@@ -8,7 +8,12 @@
     <form class="form-inline mb-3" method="get" th:action="@{/space}">
         <div class="form-group mr-2">
             <label class="mr-2" th:text="#{spaces.filter.type}">Type</label>
-            <input class="form-control" type="text" name="type" th:value="${type}">
+            <select class="form-control" name="type">
+                <option value="" th:selected="${type == null}" th:text="#{spaces.filter.all}">All</option>
+                <option value="Sala" th:selected="${type == 'Sala'}">Sala</option>
+                <option value="Aula" th:selected="${type == 'Aula'}">Aula</option>
+                <option value="Cowork" th:selected="${type == 'Cowork'}">Cowork</option>
+            </select>
         </div>
         <div class="form-group mr-2">
             <label class="mr-2" th:text="#{spaces.filter.capacity}">Min capacity</label>

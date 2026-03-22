@@ -1,6 +1,10 @@
 package com.uniovi.sdi.bookspace.services;
 
-import com.uniovi.sdi.bookspace.entities.*;
+import com.uniovi.sdi.bookspace.entities.MaintenanceBlock;
+import com.uniovi.sdi.bookspace.entities.Reservation;
+import com.uniovi.sdi.bookspace.entities.ReservationStatus;
+import com.uniovi.sdi.bookspace.entities.Space;
+import com.uniovi.sdi.bookspace.entities.User;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
@@ -20,18 +24,18 @@ public class InsertDataSampleService {
 
     @PostConstruct
     public void init() {
-        User user1 = new User("10000001S", "Luis", "Ortega", "Us3r@1-PASSW", "ROLE_USER");
-        User user2 = new User("10000002Q", "Ana", "Ramos", "Us3r@2-PASSW", "ROLE_USER");
-        User user3 = new User("12345678Z", "Pedro", "Díaz", "@Dm1n1str@D0r", "ROLE_ADMIN");
-        User user4 = new User("77777777Y", "Lucas", "Núñez", "ClaveSegura#2026", "ROLE_USER");
-        User user5 = new User("12345678Q", "Juan", "Rodriguez", "Sol1!Luz7@Mar", "ROLE_USER");
+        User user1 = new User("10000001S", "Luis", "Ortega", "Us3r@1-PASSW", usersService.getUserRoles()[0]);
+        User user2 = new User("10000002Q", "Ana", "Ramos", "Us3r@2-PASSW", usersService.getUserRoles()[0]);
+        User user3 = new User("12345678Z", "Pedro", "Diaz", "@Dm1n1str@D0r", usersService.getUserRoles()[1]);
+        User user4 = new User("77777777Y", "Lucas", "Nunez", "ClaveSegura#2026", usersService.getUserRoles()[0]);
+        User user5 = new User("12345678Q", "Juan", "Rodriguez", "Sol1!Luz7@Mar", usersService.getUserRoles()[0]);
         usersService.addUser(user1);
         usersService.addUser(user2);
         usersService.addUser(user3);
         usersService.addUser(user4);
         usersService.addUser(user5);
 
-        Space space1 = new Space("Sala Azul", "Reunión", "Planta 1", 6, true);
+        Space space1 = new Space("Sala Azul", "Sala", "Planta 1", 6, true);
         Space space2 = new Space("Aula 101", "Aula", "Edificio Norte", 30, true);
         Space space3 = new Space("Cowork 3", "Cowork", "Planta 2", 1, true);
         spacesService.addSpace(space1);
@@ -43,19 +47,17 @@ public class InsertDataSampleService {
         LocalDateTime tomorrow14 = tomorrow9.plusHours(5);
         LocalDateTime tomorrow16 = tomorrow9.plusHours(7);
 
-        seedWriteService.saveReservation(new Reservation(user1, space1, tomorrow9, tomorrow11, "Reunión de equipo"));
-        seedWriteService.saveReservation(new Reservation(user1, space2, tomorrow14, tomorrow16, "Formación"));
+        seedWriteService.saveReservation(new Reservation(user1, space2, tomorrow14, tomorrow16, "Formacion"));
         seedWriteService.saveBlock(new MaintenanceBlock(space1, tomorrow11, tomorrow14, "Mantenimiento"));
-        
 
         seedWriteService.saveReservation(
-                new Reservation(user1, space1, tomorrow9, tomorrow9.plusHours(2), "Reunión 1")
+                new Reservation(user1, space1, tomorrow9, tomorrow9.plusHours(2), "Reunion 1")
         );
         seedWriteService.saveReservation(
-                new Reservation(user1, space1, tomorrow9.plusDays(1), tomorrow9.plusDays(1).plusHours(2), "Reunión 2")
+                new Reservation(user1, space1, tomorrow9.plusDays(1), tomorrow9.plusDays(1).plusHours(2), "Reunion 2")
         );
         seedWriteService.saveReservation(
-                new Reservation(user2, space1, tomorrow9.plusDays(2), tomorrow9.plusDays(2).plusHours(2), "Reunión 3")
+                new Reservation(user2, space1, tomorrow9.plusDays(2), tomorrow9.plusDays(2).plusHours(2), "Reunion 3")
         );
 
         seedWriteService.saveReservation(
@@ -68,7 +70,6 @@ public class InsertDataSampleService {
                 new Reservation(user4, space2, tomorrow9.plusDays(4), tomorrow9.plusDays(4).plusHours(3), "Clase 3")
         );
 
-        // Reserva en Cowork 3
         seedWriteService.saveReservation(
                 new Reservation(user5, space3, tomorrow9.plusHours(1), tomorrow9.plusHours(3), "Trabajo individual")
         );
@@ -76,7 +77,6 @@ public class InsertDataSampleService {
                 new Reservation(user5, space3, tomorrow9.plusDays(2), tomorrow9.plusDays(2).plusHours(2), "Trabajo 2")
         );
 
-        // Reserva CANCELADA para que PR23 la vea
         Reservation cancelled = new Reservation(user1, space1,
                 tomorrow9.plusDays(5),
                 tomorrow9.plusDays(5).plusHours(1),
@@ -84,12 +84,11 @@ public class InsertDataSampleService {
         cancelled.setStatus(ReservationStatus.CANCELLED);
         seedWriteService.saveReservation(cancelled);
 
-        // BLOQUEOS de mantenimiento
         seedWriteService.saveBlock(
                 new MaintenanceBlock(space1,
                         tomorrow9.plusHours(2),
                         tomorrow9.plusHours(4),
-                        "Limpieza rápida")
+                        "Limpieza rapida")
         );
 
         seedWriteService.saveBlock(
@@ -103,9 +102,7 @@ public class InsertDataSampleService {
                 new MaintenanceBlock(space2,
                         tomorrow9.plusDays(1).plusHours(1),
                         tomorrow9.plusDays(1).plusHours(3),
-                        "Avería equipo")
+                        "Averia equipo")
         );
-
     }
 }
-

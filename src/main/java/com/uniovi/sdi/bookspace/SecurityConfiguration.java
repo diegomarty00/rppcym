@@ -47,7 +47,8 @@ public class SecurityConfiguration {
                                 "/space/toggle/**",
                                 "/space/*/blocks/add",
                                 "/space/blocks/*/cancel",
-                                "/reservations/admin"
+                                "/reservations/admin",
+                                "/reservations/admin/export"
                         ).hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
@@ -67,7 +68,7 @@ public class SecurityConfiguration {
                         })
                 )
                 .logout((logout) -> logout
-                        .logoutSuccessUrl("/")
+                        .logoutSuccessUrl("/login")
                         .permitAll()
                 );
         return http.build();

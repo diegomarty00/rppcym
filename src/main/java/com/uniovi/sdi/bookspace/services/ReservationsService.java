@@ -50,6 +50,17 @@ public class ReservationsService {
         reservationsRepository.save(reservation);
     }
 
+    public long countActiveReservationsForUser(User user, LocalDateTime now) {
+        if (user == null || now == null) {
+            return 0;
+        }
+        return reservationsRepository.countByUserAndStatusAndEndDateTimeAfter(
+                user,
+                ReservationStatus.ACTIVE,
+                now
+        );
+    }
+
 
 
     public Page<Reservation> getGlobalReservations(Long spaceId,
@@ -67,6 +78,21 @@ public class ReservationsService {
         }
 
         return reservationsRepository.findGlobalFilteredPage(spaceId, from, to, pageable);
+    }
+
+    public List<Reservation> getGlobalReservations(Long spaceId,
+                                                   LocalDateTime from,
+                                                   LocalDateTime to) {
+        from = from == null ? LocalDateTime.of(1970, 1, 1, 0, 0) : from;
+        to = to == null ? LocalDateTime.of(2100, 1, 1, 23, 59) : to;
+
+        if (from.isAfter(to)) {
+            LocalDateTime temp = from;
+            from = to;
+            to = temp;
+        }
+
+        return reservationsRepository.findGlobalFiltered(spaceId, from, to);
     }
 
     private String normalizeReason(String reason) {

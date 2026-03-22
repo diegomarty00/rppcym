@@ -17,9 +17,11 @@ import java.util.Set;
 @Service("userDetailsService")
 public class UserDetailsServiceImpl implements UserDetailsService {
     private final UsersRepository usersRepository;
+    private final UsersService usersService;
 
-    public UserDetailsServiceImpl(UsersRepository usersRepository) {
+    public UserDetailsServiceImpl(UsersRepository usersRepository, UsersService usersService) {
         this.usersRepository = usersRepository;
+        this.usersService = usersService;
     }
 
     @Override
@@ -30,7 +32,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         }
 
         Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
-        String role = user.getUserRole() == null ? "ROLE_USER" : user.getUserRole();
+        String role = user.getUserRole() == null ? usersService.getUserRoles()[0] : user.getUserRole();
         grantedAuthorities.add(new SimpleGrantedAuthority(role));
         return new org.springframework.security.core.userdetails.User(
                 user.getDni(),

@@ -71,7 +71,7 @@ public class UsersController {
     }
 
     @PostMapping(value="/user/changePasswd")
-    public String changePasswd(@ModelAttribute("changePasswordForm") @Validated User userNewPassword,
+    public String changePasswd(@ModelAttribute("user") @Validated User userNewPassword,
                                      BindingResult result) {
         changePasswordValidator.validate(userNewPassword, result);
         if(result.hasErrors()) {

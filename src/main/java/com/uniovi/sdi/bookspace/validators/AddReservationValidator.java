@@ -4,7 +4,9 @@ import com.uniovi.sdi.bookspace.entities.Reservation;
 import com.uniovi.sdi.bookspace.entities.RecurrenceFrequency;
 import com.uniovi.sdi.bookspace.entities.Space;
 import com.uniovi.sdi.bookspace.services.AvailabilityService;
+import com.uniovi.sdi.bookspace.services.ReservationsService;
 import com.uniovi.sdi.bookspace.services.SpacesService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
@@ -16,10 +18,17 @@ public class AddReservationValidator implements Validator {
 
     private final AvailabilityService availabilityService;
     private final SpacesService spacesService;
+    private final ReservationsService reservationsService;
+    private final int maxActiveReservations;
 
-    public AddReservationValidator(AvailabilityService availabilityService, SpacesService spacesService) {
+    public AddReservationValidator(AvailabilityService availabilityService,
+                                   SpacesService spacesService,
+                                   ReservationsService reservationsService,
+                                   @Value("${reservations.active.limit:3}") int maxActiveReservations) {
         this.availabilityService = availabilityService;
         this.spacesService = spacesService;
+        this.reservationsService = reservationsService;
+        this.maxActiveReservations = maxActiveReservations;
     }
 
     @Override
@@ -33,6 +42,15 @@ public class AddReservationValidator implements Validator {
 
         if (reservation.getUser() == null) {
             errors.reject("reservations.add.error.user");
+        } else {
+            long activeCount = reservationsService.countActiveReservationsForUser(
+                    reservation.getUser(),
+                    LocalDateTime.now()
+            );
+            int plannedReservations = countPlannedReservations(reservation);
+            if (activeCount + plannedReservations > maxActiveReservations) {
+                errors.reject("reservations.add.error.limit");
+            }
         }
 
         if (reservation.getSpace() == null || reservation.getSpace().getId() == null) {
@@ -125,5 +143,26 @@ public class AddReservationValidator implements Validator {
             case YEARLY -> dateTime.plusYears(1);
             case NONE -> dateTime;
         };
+    }
+
+    private int countPlannedReservations(Reservation reservation) {
+        if (reservation == null || reservation.getStartDateTime() == null
+                || reservation.getEndDateTime() == null) {
+            return 0;
+        }
+
+        if (reservation.getRecurrenceFrequency() == null ||
+                reservation.getRecurrenceFrequency() == RecurrenceFrequency.NONE ||
+                reservation.getRecurrenceEndDate() == null) {
+            return 1;
+        }
+
+        int count = 1;
+        LocalDateTime nextStartDateTime = move(reservation.getStartDateTime(), reservation.getRecurrenceFrequency());
+        while (!nextStartDateTime.toLocalDate().isAfter(reservation.getRecurrenceEndDate())) {
+            count++;
+            nextStartDateTime = move(nextStartDateTime, reservation.getRecurrenceFrequency());
+        }
+        return count;
     }
 }

@@ -25,6 +25,10 @@ public interface ReservationsRepository extends CrudRepository<Reservation, Long
             LocalDateTime endExclusive
     );
 
+    long countByUserAndStatusAndEndDateTimeAfter(User user,
+                                                 ReservationStatus status,
+                                                 LocalDateTime endExclusive);
+
     @Query("""
             select r
             from Reservation r

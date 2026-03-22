@@ -12,6 +12,9 @@ import com.uniovi.sdi.bookspace.validators.AddReservationValidator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -24,6 +27,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Controller
 @RequestMapping("/reservations")
@@ -158,6 +163,29 @@ public class ReservationsController {
         return "reservations/admin";
     }
 
+    @GetMapping("/admin/export")
+    public ResponseEntity<String> exportReservations(
+            @RequestParam(required = false) Long spaceId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to
+    ) {
+        List<Reservation> reservations = reservationsService.getGlobalReservations(spaceId, from, to);
+        StringBuilder csv = new StringBuilder();
+        csv.append("User,Space,Start,End,Status").append("\n");
+        for (Reservation reservation : reservations) {
+            csv.append(escapeCsv(reservation.getUser() == null ? "" : reservation.getUser().getDni())).append(",");
+            csv.append(escapeCsv(reservation.getSpace() == null ? "" : reservation.getSpace().getName())).append(",");
+            csv.append(escapeCsv(formatDateTime(reservation.getStartDateTime()))).append(",");
+            csv.append(escapeCsv(formatDateTime(reservation.getEndDateTime()))).append(",");
+            csv.append(escapeCsv(reservation.getStatus() == null ? "" : reservation.getStatus().name())).append("\n");
+        }
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"reservations.csv\"")
+                .contentType(MediaType.parseMediaType("text/csv"))
+                .body(csv.toString());
+    }
+
     private User getLoggedUser() {
         String dni = securityService.findLoggedInDni();
         if (dni == null) {
@@ -167,6 +195,23 @@ public class ReservationsController {
     }
 
     private boolean isStandardUser(User user) {
-        return "ROLE_USER".equals(user.getUserRole());
+        return usersService.getUserRoles()[0].equals(user.getUserRole());
+    }
+
+    private String formatDateTime(LocalDateTime dateTime) {
+        if (dateTime == null) {
+            return "";
+        }
+        return dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null) {
+            return "";
+        }
+        String escaped = value.replace("\"", "\"\"");
+        boolean needsQuotes = escaped.contains(",") || escaped.contains("\"") || escaped.contains("\n")
+                || escaped.contains("\r");
+        return needsQuotes ? "\"" + escaped + "\"" : escaped;
     }
 }

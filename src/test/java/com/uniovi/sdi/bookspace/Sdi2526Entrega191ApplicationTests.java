@@ -23,18 +23,28 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.support.ui.Select;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 @SpringBootTest
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class Sdi2526Entrega191ApplicationTests {
     static String PathFirefox = "C:\\Program Files\\Mozilla Firefox\\firefox.exe";
 
+    static String GeckodriverRutaDavid = "C:\\Users\\Jose David\\Downloads" +
+            "\\PL-SDI-Sesión5-material\\PL-SDI-Sesión5-material\\geckodriver.exe";
     static String GeckodriverRutaAdrian = "C:\\Users\\adria\\Desktop\\Burgui\\Clase\\Ingenieria\\Asignaturas\\SDI\\p6\\PL-SDI-Sesión5-material\\geckodriver.exe";
     static String GeckodriverRutaMario = "C:\\Uniovi\\Tercero\\SDI\\Sesion6\\PL-SDI-Sesión5-material\\geckodriver.exe";
     static String GeckodriverRutaDiego = "C:\\Dev\\tools\\selenium\\geckodriver.exe";
@@ -45,9 +55,24 @@ class Sdi2526Entrega191ApplicationTests {
     private static final DateTimeFormatter DATE_FORM_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     public static WebDriver getDriver(String PathFirefox, String Geckodriver) {
+        return getDriverWithDownloadDir(PathFirefox, Geckodriver, null);
+    }
+
+    private static WebDriver getDriverWithDownloadDir(String PathFirefox, String Geckodriver, String downloadDir) {
         System.setProperty("webdriver.firefox.bin", PathFirefox);
         System.setProperty("webdriver.gecko.driver", Geckodriver);
-        driver = new FirefoxDriver();
+        FirefoxOptions options = new FirefoxOptions();
+        if (downloadDir != null) {
+            FirefoxProfile profile = new FirefoxProfile();
+            profile.setPreference("browser.download.folderList", 2);
+            profile.setPreference("browser.download.dir", downloadDir);
+            profile.setPreference("browser.download.manager.showWhenStarting", false);
+            profile.setPreference("browser.helperApps.neverAsk.saveToDisk",
+                    "text/csv,application/csv,application/vnd.ms-excel,text/plain");
+            profile.setPreference("pdfjs.disabled", true);
+            options.setProfile(profile);
+        }
+        driver = new FirefoxDriver(options);
         return driver;
     }
 
@@ -71,13 +96,40 @@ class Sdi2526Entrega191ApplicationTests {
     }
 
     private void loginAsStandardUser() {
-        PO_HomeView.clickOption(driver, "login", "class", "btn btn-primary");
-        PO_LoginView.fillLoginForm(driver, "77777777Y", "ClaveSegura#2026");
+        loginAsUser("77777777Y", "ClaveSegura#2026");
     }
 
     private void loginAsAdmin() {
+        loginAsUser("12345678Z", "@Dm1n1str@D0r");
+    }
+
+    private void loginAsUser(String dni, String password) {
         PO_HomeView.clickOption(driver, "login", "class", "btn btn-primary");
-        PO_LoginView.fillLoginForm(driver, "12345678Z", "@Dm1n1str@D0r");
+        PO_LoginView.fillLoginForm(driver, dni, password);
+    }
+
+    private Path waitForCsvDownload(Path downloadDir, long timeoutMillis) {
+        long start = System.currentTimeMillis();
+        while (System.currentTimeMillis() - start < timeoutMillis) {
+            try (Stream<Path> files = Files.list(downloadDir)) {
+                Path csv = files
+                        .filter(path -> path.toString().toLowerCase().endsWith(".csv"))
+                        .filter(path -> !path.getFileName().toString().endsWith(".part"))
+                        .findFirst()
+                        .orElse(null);
+                if (csv != null && Files.size(csv) > 0) {
+                    return csv;
+                }
+            } catch (Exception ignored) {
+            }
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException ignored) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        return null;
     }
 
     private LocalDateTime base = LocalDateTime.now().plusDays(1)
@@ -110,6 +162,17 @@ class Sdi2526Entrega191ApplicationTests {
         driver.findElement(By.cssSelector("form button[type='submit']")).click();
     }
 
+    private String getFirstAvailableSpaceName(String... candidates) {
+        List<WebElement> options = driver.findElements(By.cssSelector("#spaceId option"));
+        for (String candidate : candidates) {
+            boolean present = options.stream().anyMatch(option -> candidate.equals(option.getText()));
+            if (present) {
+                return candidate;
+            }
+        }
+        Assertions.fail("No se encontro ninguno de los espacios esperados en el formulario de reserva");
+        return null;
+    }
 
     private void fillBlockForm(String start, String end, String reason) {
 
@@ -560,6 +623,82 @@ class Sdi2526Entrega191ApplicationTests {
         PO_View.checkElementByKey(driver, "space.reservations.list", PO_Properties.getSPANISH());
     }
 
+    // PR26 Consultar el listado de espacios disponibles (usuario estándar)
+    @Test
+    @Order(26)
+    public void PR26() {
+        loginAsStandardUser();
+
+        driver.navigate().to(URL + "/space");
+        String title = PO_HomeView.getP().getString("spaces.title", PO_Properties.getSPANISH());
+        List<WebElement> titleResult = PO_View.checkElementBy(driver, "text", title);
+        Assertions.assertEquals(title, titleResult.getFirst().getText());
+
+        Assertions.assertFalse(PO_View.checkElementBy(driver, "text", "Cowork 3").isEmpty());
+    }
+
+    // PR27 Aplicar un filtro en el listado de espacios
+    @Test
+    @Order(27)
+    public void PR27() {
+        loginAsStandardUser();
+
+        driver.navigate().to(URL + "/space");
+        WebElement minCapacity = driver.findElement(By.name("minCapacity"));
+        minCapacity.clear();
+        minCapacity.sendKeys("20");
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+
+        Assertions.assertFalse(driver.findElements(By.xpath("//*[text()='Aula 101']")).isEmpty());
+        Assertions.assertTrue(driver.findElements(By.xpath("//*[text()='Cowork 3']")).isEmpty());
+    }
+
+    // PR28 Acceder al detalle de un espacio desde el listado
+    @Test
+    @Order(28)
+    public void PR28() {
+        loginAsStandardUser();
+
+        driver.navigate().to(URL + "/space");
+        driver.findElement(By.xpath("//tr[td[contains(text(),'Cowork 3')]]//a[contains(@href,'/space/details')]"))
+                .click();
+
+        WebElement title = driver.findElement(By.tagName("h1"));
+        Assertions.assertEquals("Cowork 3", title.getText());
+    }
+
+    // PR29 Consultar disponibilidad de un espacio para una franja de días
+    @Test
+    @Order(29)
+    public void PR29() {
+        loginAsStandardUser();
+
+        driver.navigate().to(URL + "/space");
+        driver.findElement(By.xpath("//tr[td[contains(text(),'Cowork 3')]]//a[contains(@href,'/space/details')]"))
+                .click();
+        driver.findElement(By.xpath("//a[contains(@href,'/availability')]")).click();
+
+        LocalDateTime fromDate = LocalDateTime.now().minusDays(1).withHour(9).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime toDate = LocalDateTime.now().plusDays(10).withHour(18).withMinute(0).withSecond(0).withNano(0);
+
+        WebElement fromInput = driver.findElement(By.name("from"));
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('input')); arguments[0].dispatchEvent(new Event('change'));",
+                fromInput, fromDate.format(DATE_TIME_FORM_FORMAT)
+        );
+
+        WebElement toInput = driver.findElement(By.name("to"));
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('input')); arguments[0].dispatchEvent(new Event('change'));",
+                toInput, toDate.format(DATE_TIME_FORM_FORMAT)
+        );
+
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+
+        Assertions.assertFalse(driver.findElements(By.xpath(
+                "//table//tbody/tr")).isEmpty());
+    }
+
     @Test
     @Order(30)
     public void PR30() {
@@ -634,11 +773,51 @@ class Sdi2526Entrega191ApplicationTests {
 
         LocalDateTime startDateTime = LocalDateTime.now().plusDays(1).withHour(12).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime endDateTime = startDateTime.plusHours(1);
-        fillReservationForm("Aula 101", startDateTime, endDateTime, "Reserva en bloqueo");
+        String blockedSpaceName = getFirstAvailableSpaceName("Espacio Editado 15", "Sala Azul");
+        fillReservationForm(blockedSpaceName, startDateTime, endDateTime, "Reserva en bloqueo");
 
         String errorText = PO_HomeView.getP().getString("reservations.add.error.blocked", PO_Properties.getSPANISH());
         List<WebElement> result = PO_View.checkElementBy(driver, "text", errorText);
         Assertions.assertEquals(errorText, result.getFirst().getText());
+    }
+
+    // PR34 Consultar el listado de reservas propias
+    @Test
+    @Order(34)
+    public void PR34() {
+        loginAsStandardUser();
+
+        driver.navigate().to(URL + "/reservations/list");
+        String listTitle = PO_HomeView.getP().getString("reservations.mine.title", PO_Properties.getSPANISH());
+        List<WebElement> titleResult = PO_View.checkElementBy(driver, "text", listTitle);
+        Assertions.assertFalse(titleResult.isEmpty());
+
+        Assertions.assertFalse(PO_View.checkElementBy(driver, "text", "Aula 101").isEmpty());
+    }
+
+    // PR35 Filtrar reservas propias por estado CANCELADA
+    @Test
+    @Order(35)
+    public void PR35() {
+        loginAsUser("10000002Q", "Us3r@2-PASSW");
+
+        driver.findElement(By.id("reservationsDropdown")).click();
+        PO_NavView.clickOption(driver, "reservations/add", "id", "spaceId");
+
+        LocalDateTime startDateTime = LocalDateTime.now().plusDays(65).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime endDateTime = startDateTime.plusHours(2);
+        fillReservationForm("Cowork 3", startDateTime, endDateTime, "Reserva a cancelar PR35");
+
+        WebElement cancelButton = driver.findElement(By.xpath(
+                "//tr[td[contains(text(),'Cowork 3')] and td[contains(text(),'" + startDateTime + "')]]//button[@type='submit']"));
+        cancelButton.click();
+
+        Select statusSelect = new Select(driver.findElement(By.name("status")));
+        statusSelect.selectByValue("CANCELLED");
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+
+        Assertions.assertFalse(driver.findElements(By.xpath(
+                "//tr[td[contains(text(),'Cowork 3')] and td[contains(text(),'CANCELLED')]]")).isEmpty());
     }
 
     @Test
@@ -649,7 +828,7 @@ class Sdi2526Entrega191ApplicationTests {
         driver.findElement(By.id("reservationsDropdown")).click();
         PO_NavView.clickOption(driver, "reservations/add", "id", "spaceId");
 
-        LocalDateTime startDateTime = LocalDateTime.now().plusDays(3).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime startDateTime = LocalDateTime.now().plusDays(6).withHour(10).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime endDateTime = startDateTime.plusHours(2);
         fillReservationForm("Cowork 3", startDateTime, endDateTime, "Reserva a cancelar");
 
@@ -658,11 +837,11 @@ class Sdi2526Entrega191ApplicationTests {
         Assertions.assertFalse(titleResult.isEmpty());
 
         WebElement cancelButton = driver.findElement(By.xpath(
-                "//tr[td[contains(text(),'Cowork 3')] and td[contains(text(),'ACTIVE')]]//button[@type='submit']"));
+                "//tr[td[contains(text(),'Cowork 3')] and td[contains(text(),'" + startDateTime + "')]]//button[@type='submit']"));
         cancelButton.click();
 
         List<WebElement> cancelledReservation = PO_View.checkElementBy(driver, "free",
-                "//tr[td[contains(text(),'Cowork 3')] and td[contains(text(),'CANCELLED')]]");
+                "//tr[td[contains(text(),'Cowork 3')] and td[contains(text(),'" + startDateTime + "')] and td[contains(text(),'CANCELLED')]]");
         Assertions.assertFalse(cancelledReservation.isEmpty());
 
         driver.findElement(By.id("reservationsDropdown")).click();
@@ -671,7 +850,9 @@ class Sdi2526Entrega191ApplicationTests {
 
         titleResult = PO_View.checkElementBy(driver, "text", listTitle);
         Assertions.assertFalse(titleResult.isEmpty());
-        Assertions.assertFalse(PO_View.checkElementBy(driver, "text", "Reserva tras cancelacion").isEmpty());
+        List<WebElement> rebookedReservation = PO_View.checkElementBy(driver, "free",
+                "//tr[td[contains(text(),'Cowork 3')] and td[contains(text(),'" + startDateTime + "')] and td[contains(text(),'ACTIVE')]]");
+        Assertions.assertFalse(rebookedReservation.isEmpty());
     }
 
     //PR37 Modificar la contraseña con datos válidos.
@@ -682,7 +863,7 @@ class Sdi2526Entrega191ApplicationTests {
         PO_LoginView.fillLoginForm(driver, "12345678Q", "Sol1!Luz7@Mar");
         String checkText = PO_HomeView.getP().getString("user.changePasswd.title", PO_Properties.getSPANISH());
         PO_NavView.clickOption(driver, "user/changePasswd", "h2", checkText);
-        PO_ChangePasswdView.fillForm(driver, "nueva", "nueva");
+        PO_ChangePasswdView.fillForm(driver, "NuevaClave1!", "NuevaClave1!");
         String checkTextSucces = PO_HomeView.getP().getString("title", PO_Properties.getSPANISH());
         PO_View.checkElementBy(driver, "h2", checkTextSucces);
     }
@@ -814,6 +995,90 @@ class Sdi2526Entrega191ApplicationTests {
         driver.navigate().to(URL + "/reservations/list");
         Assertions.assertTrue(driver.findElements(By.xpath(
                 "//tr[td[contains(text(),'" + startDateTime + "')]]")).isEmpty());
+    }
+
+    // PR44 Crear reservas hasta alcanzar el límite
+    @Test
+    @Order(44)
+    public void PR44() {
+        loginAsUser("10000002Q", "Us3r@2-PASSW");
+
+        driver.findElement(By.id("reservationsDropdown")).click();
+        PO_NavView.clickOption(driver, "reservations/add", "id", "spaceId");
+
+        LocalDateTime startDateTime = LocalDateTime.now().plusDays(60).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime endDateTime = startDateTime.plusHours(2);
+        fillReservationForm("Cowork 3", startDateTime, endDateTime, "Reserva límite 3");
+
+    }
+
+    // PR45 Intentar crear una reserva adicional superando el límite
+    @Test
+    @Order(45)
+    public void PR45() {
+        loginAsUser("10000002Q", "Us3r@2-PASSW");
+
+        driver.findElement(By.id("reservationsDropdown")).click();
+        PO_NavView.clickOption(driver, "reservations/add", "id", "spaceId");
+
+        LocalDateTime startDateTime = LocalDateTime.now().plusDays(61).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime endDateTime = startDateTime.plusHours(2);
+        fillReservationForm("Cowork 3", startDateTime, endDateTime, "Reserva límite 3");
+
+        driver.findElement(By.id("reservationsDropdown")).click();
+        PO_NavView.clickOption(driver, "reservations/add", "id", "spaceId");
+
+        startDateTime = LocalDateTime.now().plusDays(70).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        endDateTime = startDateTime.plusHours(2);
+        fillReservationForm("Cowork 3", startDateTime, endDateTime, "Reserva excede límite");
+
+        String errorText = PO_HomeView.getP().getString("reservations.add.error.limit", PO_Properties.getSPANISH());
+        List<WebElement> result = PO_View.checkElementBy(driver, "text", errorText);
+        Assertions.assertEquals(errorText, result.getFirst().getText());
+    }
+
+    // PR46 Exportación de reservas a CSV (Administrador)
+    @Test
+    @Order(46)
+    public void PR46() {
+        Path downloadDir = null;
+        try {
+            downloadDir = Files.createTempDirectory("csv-download-");
+
+            driver.quit();
+            driver = getDriverWithDownloadDir(PathFirefox, GeckodriverRutaDiego, downloadDir.toString());
+
+            driver.navigate().to(URL);
+            loginAsAdmin();
+
+            driver.navigate().to(URL + "/reservations/admin");
+            Select select = new Select(driver.findElement(By.id("spaceId")));
+            select.selectByVisibleText("Cowork 3");
+            driver.findElement(By.cssSelector("button[type='submit']")).click();
+
+            driver.findElement(By.linkText("Exportar CSV")).click();
+
+            Path csvFile = waitForCsvDownload(downloadDir, 10000);
+            Assertions.assertNotNull(csvFile, "CSV file was not downloaded");
+
+            String content = Files.readString(csvFile);
+            Assertions.assertTrue(content.contains("User,Space,Start,End,Status"));
+            Assertions.assertTrue(content.contains("Cowork 3"));
+        } catch (Exception e) {
+            Assertions.fail(e);
+        } finally {
+            if (downloadDir != null) {
+                try (Stream<Path> walk = Files.walk(downloadDir)) {
+                    walk.sorted(Comparator.reverseOrder()).forEach(path -> {
+                        try {
+                            Files.deleteIfExists(path);
+                        } catch (Exception ignored) {
+                        }
+                    });
+                } catch (Exception ignored) {
+                }
+            }
+        }
     }
 
 }
